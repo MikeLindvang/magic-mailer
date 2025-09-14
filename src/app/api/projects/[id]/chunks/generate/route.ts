@@ -1,4 +1,5 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Project } from '@/lib/schemas/project';
@@ -153,24 +154,18 @@ export async function POST(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
     const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({ 
-      _id: new ObjectId(projectId), 
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId 
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Parse and validate request body
@@ -231,45 +226,33 @@ export async function POST(
       } as Chunk & { isCustom: boolean });
     }
 
-    return Response.json({
-      ok: true,
-      data: {
-        chunks: createdChunks,
-        message: `Generated ${createdChunks.length} chunks successfully`,
-      },
-    } as ApiResponse<{ chunks: Chunk[]; message: string }>);
+    return successResponse({
+      chunks: createdChunks,
+      message: `Generated ${createdChunks.length} chunks successfully`,
+    });
 
   } catch (error) {
     console.error('Error generating chunks:', error);
     
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
 
     // Handle OpenAI API errors
     if (error instanceof Error && error.message.includes('OpenAI API error')) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: 'AI service temporarily unavailable. Please try again later.' 
-        } as ApiResponse<never>,
-        { status: 503 }
+      return errorResponse(
+        'AI service temporarily unavailable. Please try again later.',
+        503
       );
     }
 
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Failed to generate chunks' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Failed to generate chunks',
+      500
     );
   }
 }

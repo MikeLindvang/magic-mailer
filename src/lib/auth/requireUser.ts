@@ -15,7 +15,7 @@ export async function requireUser(): Promise<
     if (!userId) {
       return {
         ok: false,
-        response: NextResponse.json(
+        response: NextjsonResponse(
           { ok: false, error: 'Unauthorized' },
           { status: 401 }
         ),
@@ -27,7 +27,7 @@ export async function requireUser(): Promise<
     console.error('Auth error:', error);
     return {
       ok: false,
-      response: NextResponse.json(
+      response: NextjsonResponse(
         { ok: false, error: 'Authentication failed' },
         { status: 500 }
       ),

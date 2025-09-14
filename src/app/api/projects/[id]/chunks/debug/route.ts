@@ -1,4 +1,5 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
@@ -26,10 +27,7 @@ export async function GET(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
@@ -40,10 +38,7 @@ export async function GET(
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Get all chunks for the project
@@ -145,20 +140,14 @@ export async function GET(
       })
     };
 
-    return Response.json({
-      ok: true,
-      data: debugInfo,
-    } as ApiResponse<typeof debugInfo>);
+    return successResponse(debugInfo);
 
   } catch (error) {
     console.error('Error in debug endpoint:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

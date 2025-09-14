@@ -74,7 +74,7 @@ async function testOpenAI() {
       throw new Error(`Embeddings API error: ${embeddingResponse.status}`);
     }
     
-    const embeddingData = await embeddingResponse.json();
+    const embeddingData = await embeddingjsonResponse();
     console.log(`✅ Embeddings API working. Dimension: ${embeddingData.data[0].embedding.length}`);
     
     // Test chat completions endpoint
@@ -95,7 +95,7 @@ async function testOpenAI() {
       throw new Error(`Chat API error: ${chatResponse.status}`);
     }
     
-    const chatData = await chatResponse.json();
+    const chatData = await chatjsonResponse();
     console.log(`✅ Chat API working. Response: ${chatData.choices[0].message.content}`);
     
     return true;

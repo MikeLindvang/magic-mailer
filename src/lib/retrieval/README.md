@@ -58,7 +58,7 @@ import { embedMany } from '@/lib/vector/embeddings';
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    return jsonResponse({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     // Perform vector search
     const results = await vectorSearch(projectId, queryVector, k);
     
-    return Response.json({ 
+    return jsonResponse({ 
       ok: true, 
       data: {
         results,
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    return Response.json({ 
+    return jsonResponse({ 
       ok: false, 
       error: error instanceof Error ? error.message : 'Search failed' 
     }, { status: 500 });

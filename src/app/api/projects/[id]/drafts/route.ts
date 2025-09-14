@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
+import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 import { type Draft } from '@/lib/schemas/draft';
 
@@ -26,27 +28,21 @@ export async function GET(
 
     // Validate ObjectId format for projectId
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Get database collections
-    const projectsCollection = await getColl('projects');
+    const projectsCollection = await getColl<Project>('projects');
     const draftsCollection = await getColl<Draft>('drafts');
 
     // Verify project exists and user owns it
     const project = await projectsCollection.findOne({
-      _id: new ObjectId(projectId),
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId
     });
 
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Retrieve all drafts for this project, sorted by creation date (newest first)
@@ -55,20 +51,14 @@ export async function GET(
       .sort({ createdAt: -1 })
       .toArray();
 
-    return Response.json({
-      ok: true,
-      data: drafts
-    } as ApiResponse<Draft[]>);
+    return successResponse(drafts);
 
   } catch (error) {
     console.error('Error retrieving drafts:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Failed to retrieve drafts' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Failed to retrieve drafts',
+      500
     );
   }
 }

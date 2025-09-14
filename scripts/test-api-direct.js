@@ -206,7 +206,7 @@ async function testGenerateAPI(projectId) {
     
     console.log(`📥 Response status: ${response.status}`);
     
-    const result = await response.json();
+    const result = await jsonResponse();
     console.log('📄 Response:', JSON.stringify(result, null, 2));
     
     if (result.ok) {
@@ -244,7 +244,7 @@ async function testHealthEndpoint() {
   
   try {
     const response = await fetch('http://localhost:3000/api/health');
-    const result = await response.json();
+    const result = await jsonResponse();
     
     console.log(`📥 Health check status: ${response.status}`);
     console.log('📄 Response:', JSON.stringify(result, null, 2));

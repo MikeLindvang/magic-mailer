@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth/requireUser';
+import { jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { embedMany } from '@/lib/vector/embeddings';
 import { Chunk } from '@/lib/schemas/chunk';
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     }).toArray();
 
     if (nonVectorChunks.length === 0) {
-      return NextResponse.json({
+      return jsonResponse({
         ok: true,
         data: {
           indexed: 0,
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    return jsonResponse({
       ok: true,
       data: {
         indexed: bulkResult.modifiedCount,
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
     console.error('Index API error:', error);
     
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      return jsonResponse(
         { 
           ok: false, 
           error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(
+    return jsonResponse(
       { 
         ok: false, 
         error: error instanceof Error ? error.message : 'Failed to index chunks' 

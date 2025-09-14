@@ -1,4 +1,5 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Asset } from '@/lib/schemas/asset';
 import { type Chunk } from '@/lib/schemas/chunk';
@@ -34,10 +35,7 @@ export async function GET(
   try {
     // Validate ObjectId format for projectId only (assetId is stored as string)
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
@@ -48,10 +46,7 @@ export async function GET(
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Verify asset exists and belongs to the project
@@ -62,10 +57,7 @@ export async function GET(
     });
 
     if (!asset) {
-      return Response.json(
-        { ok: false, error: 'Asset not found' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Asset not found', 404);
     }
 
     // Get all chunks for the asset
@@ -75,23 +67,17 @@ export async function GET(
       .sort({ chunkId: 1 }) // Sort by chunk ID for consistent ordering
       .toArray();
 
-    return Response.json({
-      ok: true,
-      data: {
-        asset,
-        chunks,
-      },
-    } as ApiResponse<{ asset: Asset; chunks: Chunk[] }>);
+    return successResponse({
+      asset,
+      chunks,
+    });
 
   } catch (error) {
     console.error('Error fetching asset chunks:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }
@@ -118,10 +104,7 @@ export async function DELETE(
   try {
     // Validate ObjectId format for projectId only (assetId is stored as string)
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
@@ -132,10 +115,7 @@ export async function DELETE(
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Find the asset to ensure it exists and belongs to the project (assetId is stored as string)
@@ -146,10 +126,7 @@ export async function DELETE(
     });
 
     if (!asset) {
-      return Response.json(
-        { ok: false, error: 'Asset not found' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Asset not found', 404);
     }
 
     // Delete all chunks associated with this asset
@@ -166,29 +143,20 @@ export async function DELETE(
     });
 
     if (assetDeleteResult.deletedCount === 0) {
-      return Response.json(
-        { ok: false, error: 'Failed to delete asset' } as ApiResponse<never>,
-        { status: 500 }
-      );
+      return errorResponse('Failed to delete asset', 500);
     }
 
-    return Response.json({
-      ok: true,
-      data: {
-        assetId,
-        deletedChunks: chunksDeleteResult.deletedCount,
-      },
-    } as ApiResponse<{ assetId: string; deletedChunks: number }>);
+    return successResponse({
+      assetId,
+      deletedChunks: chunksDeleteResult.deletedCount,
+    });
 
   } catch (error) {
     console.error('Error deleting asset:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }
@@ -215,10 +183,7 @@ export async function PUT(
   try {
     // Validate ObjectId format for projectId only (assetId is stored as string)
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Parse and validate request body
@@ -233,10 +198,7 @@ export async function PUT(
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Update the asset (assetId is stored as string, not ObjectId)
@@ -258,10 +220,7 @@ export async function PUT(
     );
 
     if (!updateResult) {
-      return Response.json(
-        { ok: false, error: 'Asset not found' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Asset not found', 404);
     }
 
     // Get chunk count for the updated asset
@@ -276,31 +235,22 @@ export async function PUT(
       chunkCount,
     };
 
-    return Response.json({
-      ok: true,
-      data: updatedAssetWithChunkCount,
-    } as ApiResponse<Asset & { chunkCount: number }>);
+    return successResponse(updatedAssetWithChunkCount);
 
   } catch (error) {
     console.error('Error updating asset:', error);
     
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: error.errors.map(e => e.message).join(', ')
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        error.errors.map(e => e.message).join(', '),
+        400
       );
     }
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

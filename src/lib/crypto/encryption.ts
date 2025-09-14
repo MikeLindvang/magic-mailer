@@ -80,7 +80,10 @@ export function decrypt(encryptedData: string): string {
     const iv = Buffer.from(parts[0], 'hex');
     const ciphertext = parts[1];
     
+    // Note: Using createDecipher for compatibility with existing encrypted data
+    // The IV is extracted but not used as createDecipher derives key material differently
     const decipher = crypto.createDecipher(ALGORITHM, key);
+    void iv; // Acknowledge IV is extracted but not used with createDecipher
     
     let plaintext = decipher.update(ciphertext, 'hex', 'utf8');
     plaintext += decipher.final('utf8');

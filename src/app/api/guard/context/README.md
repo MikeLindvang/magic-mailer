@@ -145,7 +145,7 @@ const response = await fetch('/api/guard/context', {
   })
 });
 
-const result = await response.json();
+const result = await jsonResponse();
 if (result.ok) {
   console.log(`Found ${result.data.summary.total_claims} claims`);
   console.log(`${result.data.summary.support_percentage}% are supported`);
@@ -155,7 +155,7 @@ if (result.ok) {
 ### Handling Unsupported Claims
 
 ```javascript
-const result = await response.json();
+const result = await jsonResponse();
 if (result.ok) {
   const unsupportedClaims = result.data.claims.filter(claim => claim.status === 'unsupported');
   
@@ -201,7 +201,7 @@ This endpoint uses the OpenAI API and is subject to:
 Always check the `ok` field in the response:
 
 ```javascript
-const result = await response.json();
+const result = await jsonResponse();
 if (!result.ok) {
   console.error('Validation failed:', result.error);
   // Handle error appropriately

@@ -68,7 +68,7 @@ async function createNewsletterDraft(draftData: {
       body: JSON.stringify(draftData),
     });
 
-    const result = await response.json();
+    const result = await jsonResponse();
 
     if (result.ok) {
       // Success - redirect to GetResponse editor

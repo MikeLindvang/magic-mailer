@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireUser, ApiResponse } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse, jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
+import { type Project } from '@/lib/schemas/project';
 import { hybridRetrieve, HybridRetrievalResponse } from '@/lib/retrieval/hybrid';
 
 /**
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { projectId, query, k } = validatedData;
 
     // Verify project ownership
-    const projectsColl = await getColl('projects');
+    const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({ 
       _id: projectId, 
       userId 
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         ok: false,
         error: 'Project not found or access denied',
       };
-      return Response.json(response, { status: 404 });
+      return jsonResponse(response, { status: 404 });
     }
 
     // Perform hybrid retrieval
@@ -66,7 +68,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: retrievalResult,
     };
 
-    return Response.json(response);
+    return jsonResponse(response);
 
   } catch (error) {
     console.error('Retrieval API error:', error);
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         ok: false,
         error: `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
       };
-      return Response.json(response, { status: 400 });
+      return jsonResponse(response, { status: 400 });
     }
 
     // Handle other errors
@@ -85,6 +87,6 @@ export async function POST(request: NextRequest): Promise<Response> {
       ok: false,
       error: error instanceof Error ? error.message : 'Retrieval failed',
     };
-    return Response.json(response, { status: 500 });
+    return jsonResponse(response, { status: 500 });
   }
 }

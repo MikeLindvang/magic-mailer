@@ -1,6 +1,8 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
 import { type Project } from '@/lib/schemas/project';
+import { successResponse, errorResponse } from '@/lib/api/response';
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 /**
@@ -28,32 +30,21 @@ export async function GET(): Promise<Response> {
 
   try {
     // Get all projects for the user
-    const projectsColl = await getColl('projects');
-    const projectsFromDb = await projectsColl
+    const projectsColl = await getColl<Project>('projects');
+    const projects = await projectsColl
       .find({ userId })
       .sort({ createdAt: -1 }) // Most recent first
       .toArray();
 
-    // Convert ObjectId to string for frontend
-    const projects: Project[] = projectsFromDb.map(project => ({
-      ...project,
-      _id: project._id.toString(),
-    }));
-
-    return Response.json({
-      ok: true,
-      data: projects,
-    } as ApiResponse<Project[]>);
+    // Projects already have string IDs, no conversion needed
+    return successResponse(projects);
 
   } catch (error) {
     console.error('Error fetching projects:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }
@@ -80,45 +71,33 @@ export async function POST(request: Request): Promise<Response> {
     // Create new project
     const projectsColl = await getColl<Project>('projects');
     const now = new Date().toISOString();
+    const projectId = new ObjectId().toString();
     
-    const newProject: Omit<Project, '_id'> = {
+    const newProject: Project = {
+      _id: projectId,
       ...validatedData,
       userId,
       createdAt: now,
       updatedAt: now,
     };
 
-    const result = await projectsColl.insertOne(newProject);
-    
-    const createdProject: Project = {
-      _id: result.insertedId.toString(),
-      ...newProject,
-    };
+    await projectsColl.insertOne(newProject);
 
-    return Response.json({
-      ok: true,
-      data: createdProject,
-    } as ApiResponse<Project>, { status: 201 });
+    return successResponse(newProject, 201);
 
   } catch (error) {
     console.error('Error creating project:', error);
     
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

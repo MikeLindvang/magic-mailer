@@ -1,6 +1,7 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
 import { type UserConnection } from '@/lib/schemas/userConnection';
+import { successResponse, errorResponse } from '@/lib/api/response';
 
 /**
  * GET /api/connections
@@ -30,20 +31,14 @@ export async function GET(): Promise<Response> {
       _id: connection._id.toString(),
     }));
 
-    return Response.json({
-      ok: true,
-      data: connections,
-    } as ApiResponse<UserConnection[]>);
+    return successResponse(connections);
 
   } catch (error) {
     console.error('Error fetching connections:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

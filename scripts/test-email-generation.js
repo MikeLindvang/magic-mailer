@@ -81,7 +81,7 @@ async function testOpenAIConnection() {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
     
-    const data = await response.json();
+    const data = await jsonResponse();
     const hasGpt4Mini = data.data.some(model => model.id === 'gpt-4o-mini');
     
     console.log(`✅ OpenAI API connected. GPT-4o-mini available: ${hasGpt4Mini}`);
@@ -208,7 +208,7 @@ async function generateEmbeddings(texts) {
     throw new Error(`Embedding generation failed: ${response.status}`);
   }
   
-  const data = await response.json();
+  const data = await jsonResponse();
   return data.data.map(item => item.embedding);
 }
 
@@ -250,7 +250,7 @@ async function testEmailGeneration(projectId, userId) {
       return false;
     }
     
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (result.ok) {
       console.log('✅ Email generation successful!');

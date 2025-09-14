@@ -1,4 +1,5 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
@@ -25,46 +26,29 @@ export async function GET(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Get the project and verify ownership
     const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({
-      _id: new ObjectId(projectId),
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId // Ensure user owns the project
     });
 
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
-    // Convert ObjectId to string for frontend
-    const projectData: Project = {
-      ...project,
-      _id: project._id.toString(),
-    };
-
-    return Response.json({
-      ok: true,
-      data: projectData,
-    } as ApiResponse<Project>);
+    // Project data is already in the correct format (string IDs)
+    return successResponse(project);
 
   } catch (error) {
     console.error('Error fetching project:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

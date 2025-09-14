@@ -1,6 +1,6 @@
 /**
  * API Response utilities for consistent JSON responses
- * Provides compatibility for Response.json() across different environments
+ * Provides compatibility for jsonResponse() across different environments
  */
 
 export type ApiResponse<T> = 
@@ -9,7 +9,7 @@ export type ApiResponse<T> =
 
 /**
  * Create a JSON Response with proper headers and status
- * Provides compatibility for Response.json() method
+ * Provides compatibility for jsonResponse() method
  */
 export function jsonResponse<T>(
   data: ApiResponse<T>,

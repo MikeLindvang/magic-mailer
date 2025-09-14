@@ -42,7 +42,7 @@ const RequestSchema = z.object({
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return Response.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    return jsonResponse({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -52,9 +52,9 @@ export async function POST(request: Request) {
     // Business logic here
     const result = await processData(validatedData);
     
-    return Response.json({ ok: true, data: result });
+    return jsonResponse({ ok: true, data: result });
   } catch (error) {
-    return Response.json({ 
+    return jsonResponse({ 
       ok: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 400 });

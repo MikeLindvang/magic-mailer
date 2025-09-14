@@ -227,7 +227,7 @@ async function testOpenAIGeneration(prompt) {
       throw new Error(`OpenAI API error: ${response.status} ${error}`);
     }
     
-    const data = await response.json();
+    const data = await jsonResponse();
     const content = data.choices?.[0]?.message?.content;
     
     if (!content) {

@@ -1,6 +1,6 @@
 import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
-import { type UserConnection, type CreateUserConnection } from '@/lib/schemas/userConnection';
+import { type CreateUserConnection } from '@/lib/schemas/userConnection';
 import { encrypt, maskApiKey } from '@/lib/crypto/encryption';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { z } from 'zod';
@@ -12,13 +12,6 @@ const SaveApiKeySchema = z.object({
   apiKey: z.string().min(1, 'API key is required').max(200, 'API key is too long'),
 });
 
-/**
- * Response type for successful API key save
- */
-type SaveApiKeyResponse = {
-  masked: string;
-  last4: string;
-};
 
 // maskApiKey function is now imported from crypto/encryption.ts
 

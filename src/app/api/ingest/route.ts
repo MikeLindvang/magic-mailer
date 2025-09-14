@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { normalizeMd } from '@/lib/ingest/md';
 import { htmlToMarkdown } from '@/lib/ingest/html';
@@ -33,13 +34,6 @@ const IngestRequestSchema = z.object({
 
 // type IngestRequest = z.infer<typeof IngestRequestSchema>;
 
-/**
- * Response type for successful ingestion
- */
-interface IngestResponse {
-  assetId: string;
-  chunkCount: number;
-}
 
 /**
  * POST /api/ingest
@@ -79,17 +73,11 @@ export async function POST(request: Request): Promise<Response> {
       const file = formData.get('file') as File;
 
       if (!projectId) {
-        return Response.json(
-          { ok: false, error: 'Project ID is required' } as ApiResponse<never>,
-          { status: 400 }
-        );
+        return errorResponse('Project ID is required', 400);
       }
 
       if (!file) {
-        return Response.json(
-          { ok: false, error: 'File is required' } as ApiResponse<never>,
-          { status: 400 }
-        );
+        return errorResponse('File is required', 400);
       }
 
       // Validate file type
@@ -103,10 +91,7 @@ export async function POST(request: Request): Promise<Response> {
           extractedTitle = result.title;
         } catch (error) {
           console.error('PDF processing error:', error);
-          return Response.json(
-            { ok: false, error: 'Failed to process PDF file' } as ApiResponse<never>,
-            { status: 400 }
-          );
+          return errorResponse('Failed to process PDF file', 400);
         }
       } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
         assetType = 'docx';
@@ -117,10 +102,7 @@ export async function POST(request: Request): Promise<Response> {
           extractedTitle = result.title;
         } catch (error) {
           console.error('DOCX processing error:', error);
-          return Response.json(
-            { ok: false, error: 'Failed to process DOCX file' } as ApiResponse<never>,
-            { status: 400 }
-          );
+          return errorResponse('Failed to process DOCX file', 400);
         }
       } else if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
         assetType = 'md';
@@ -130,16 +112,10 @@ export async function POST(request: Request): Promise<Response> {
           markdown = result.markdown;
         } catch (error) {
           console.error('Text file processing error:', error);
-          return Response.json(
-            { ok: false, error: 'Failed to process text file' } as ApiResponse<never>,
-            { status: 400 }
-          );
+          return errorResponse('Failed to process text file', 400);
         }
       } else {
-        return Response.json(
-          { ok: false, error: 'Unsupported file type. Please use PDF, DOCX, TXT, or MD files.' } as ApiResponse<never>,
-          { status: 400 }
-        );
+        return errorResponse('Unsupported file type. Please use PDF, DOCX, TXT, or MD files.', 400);
       }
 
     } else {
@@ -176,19 +152,13 @@ export async function POST(request: Request): Promise<Response> {
           });
 
           if (!response.ok) {
-            return Response.json(
-              { ok: false, error: `Failed to fetch URL: ${response.status} ${response.statusText}` } as ApiResponse<never>,
-              { status: 400 }
-            );
+            return errorResponse(`Failed to fetch URL: ${response.status} ${response.statusText}`, 400);
           }
 
           const contentType = response.headers.get('content-type') || '';
           
           if (!contentType.includes('text/html')) {
-            return Response.json(
-              { ok: false, error: 'URL must return HTML content' } as ApiResponse<never>,
-              { status: 400 }
-            );
+            return errorResponse('URL must return HTML content', 400);
           }
 
           const html = await response.text();
@@ -215,26 +185,17 @@ export async function POST(request: Request): Promise<Response> {
             }
           }
           
-          return Response.json(
-            { ok: false, error: errorMessage } as ApiResponse<never>,
-            { status: 400 }
-          );
+          return errorResponse(errorMessage, 400);
         }
       } else {
-        return Response.json(
-          { ok: false, error: 'Invalid source type' } as ApiResponse<never>,
-          { status: 400 }
-        );
+        return errorResponse('Invalid source type', 400);
       }
     }
 
     // Common validation and processing for both JSON and multipart requests
     // Validate ObjectId format for projectId
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
@@ -245,10 +206,7 @@ export async function POST(request: Request): Promise<Response> {
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
     
     // Generate content hash for deduplication
@@ -272,13 +230,10 @@ export async function POST(request: Request): Promise<Response> {
         assetId: existingAsset._id,
       });
 
-      return Response.json({
-        ok: true,
-        data: {
-          assetId: existingAsset._id,
-          chunkCount,
-        },
-      } as ApiResponse<IngestResponse>);
+      return successResponse({
+        assetId: existingAsset._id,
+        chunkCount,
+      });
     }
 
     // Generate asset ID
@@ -340,35 +295,26 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Return success response
-    return Response.json({
-      ok: true,
-      data: {
-        assetId,
-        chunkCount: chunks.length,
-      },
-    } as ApiResponse<IngestResponse>);
+    return successResponse({
+      assetId,
+      chunkCount: chunks.length,
+    });
 
   } catch (error) {
     console.error('Ingest error:', error);
     
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
 
     // Handle other errors
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

@@ -1,7 +1,9 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
+import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
@@ -46,24 +48,18 @@ export async function GET(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
-    const projectsColl = await getColl('projects');
+    const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({ 
-      _id: new ObjectId(projectId), 
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId 
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Get all chunks for the project
@@ -99,11 +95,11 @@ export async function GET(
           if (!asset) {
             try {
               asset = await assetsColl.findOne({
-                _id: new ObjectId(chunk.assetId),
+                _id: chunk.assetId, // assetId is stored as string, not ObjectId
                 projectId,
               });
             } catch (error) {
-              console.log(`ObjectId lookup failed for ${chunk.assetId}:`, error);
+              console.log(`Asset lookup failed for ${chunk.assetId}:`, error);
             }
           }
           
@@ -153,20 +149,14 @@ export async function GET(
       })
     );
 
-    return Response.json({
-      ok: true,
-      data: chunksWithAssets,
-    } as ApiResponse<ChunkWithAsset[]>);
+    return successResponse(chunksWithAssets);
 
   } catch (error) {
     console.error('Error fetching chunks:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }
@@ -193,24 +183,18 @@ export async function POST(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
-    const projectsColl = await getColl('projects');
+    const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({ 
-      _id: new ObjectId(projectId), 
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId 
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Parse and validate request body
@@ -239,34 +223,25 @@ export async function POST(
     const chunksColl = await getColl<Chunk>('chunks');
     await chunksColl.insertOne(chunk);
 
-    return Response.json({
-      ok: true,
-      data: {
-        ...chunk,
-        isCustom: true,
-      },
-    } as ApiResponse<ChunkWithAsset>);
+    return successResponse({
+      ...chunk,
+      isCustom: true,
+    });
 
   } catch (error) {
     console.error('Error creating chunk:', error);
     
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
 
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

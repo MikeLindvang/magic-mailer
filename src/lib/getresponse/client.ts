@@ -133,7 +133,7 @@ export class GetResponseClient {
         throw new Error(errorMessage);
       }
 
-      const newsletterData: GetResponseNewsletterResponse = await response.json();
+      const newsletterData: GetResponseNewsletterResponse = await jsonResponse();
 
       // Extract newsletter ID from the response
       const newsletterId = newsletterData.newsletterId || 

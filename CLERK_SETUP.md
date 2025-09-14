@@ -65,7 +65,7 @@ export async function GET() {
   }
 
   // User is authenticated, authResult.userId contains the user ID
-  return Response.json({
+  return jsonResponse({
     ok: true,
     data: { message: 'Hello authenticated user!', userId: authResult.userId }
   });

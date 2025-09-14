@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/requireUser';
+import { jsonResponse } from '@/lib/api/response';
 
 export async function GET() {
   const authResult = await requireUser();
@@ -8,7 +9,7 @@ export async function GET() {
     return authResult.response;
   }
 
-  return NextResponse.json({
+  return jsonResponse({
     ok: true,
     data: {
       userId: authResult.userId,

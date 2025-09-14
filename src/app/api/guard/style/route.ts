@@ -21,6 +21,8 @@ const GuardStyleRequestSchema = z.object({
   }),
 });
 
+type GuardStyleRequest = z.infer<typeof GuardStyleRequestSchema>;
+
 // Response types
 export interface StyleMismatch {
   area: string;
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Parse and validate request body
     const body = await request.json();
-    const validatedData = GuardStyleRequestSchema.parse(body);
+    const validatedData: GuardStyleRequest = GuardStyleRequestSchema.parse(body);
 
     // Call LLM to analyze style mismatches
     const analysisResult = await analyzeStyleMismatches(
@@ -94,8 +96,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 }
 
 async function analyzeStyleMismatches(
-  styleCard: Record<string, unknown>,
-  draft: Record<string, unknown>
+  styleCard: GuardStyleRequest['style_card'],
+  draft: GuardStyleRequest['draft']
 ): Promise<{
   mismatches: StyleMismatch[];
   overall_score: number;

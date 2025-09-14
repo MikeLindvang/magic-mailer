@@ -86,7 +86,7 @@ async function testTextIngestion() {
       })
     });
 
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (response.ok && result.ok) {
       console.log('✅ Text ingestion successful');
@@ -129,7 +129,7 @@ async function testUrlIngestion() {
       })
     });
 
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (response.ok && result.ok) {
       console.log('✅ URL ingestion successful');
@@ -161,7 +161,7 @@ async function testAssetRetrieval() {
       }
     });
 
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (response.ok && result.ok) {
       console.log('✅ Asset retrieval successful');
@@ -196,7 +196,7 @@ async function testHealthCheck() {
   
   try {
     const response = await fetch(`${API_BASE}/api/health`);
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (response.ok && result.ok) {
       console.log('✅ API is healthy');

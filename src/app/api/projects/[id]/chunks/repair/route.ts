@@ -1,7 +1,9 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
+import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 
 /**
@@ -28,24 +30,18 @@ export async function POST(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
-    const projectsColl = await getColl('projects');
+    const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({ 
-      _id: new ObjectId(projectId), 
+      _id: projectId, // projectId is stored as string, not ObjectId
       userId 
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Get all chunks for the project
@@ -82,7 +78,7 @@ export async function POST(
         
         // Convert orphaned chunk to custom chunk
         const updateResult = await chunksColl.updateOne(
-          { _id: new ObjectId(chunk._id) },
+          { _id: chunk._id }, // chunk._id is stored as string, not ObjectId
           { 
             $set: { 
               assetId: '', // Mark as custom chunk
@@ -106,23 +102,17 @@ export async function POST(
       validAssets: assets.length,
     };
 
-    return Response.json({
-      ok: true,
-      data: {
-        message: `Repair completed: ${convertedChunks} orphaned chunks converted to custom chunks`,
-        summary: repairSummary,
-      },
-    } as ApiResponse<{ message: string; summary: typeof repairSummary }>);
+    return successResponse({
+      message: `Repair completed: ${convertedChunks} orphaned chunks converted to custom chunks`,
+      summary: repairSummary,
+    });
 
   } catch (error) {
     console.error('Error repairing chunks:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

@@ -81,7 +81,7 @@ async function testEndpoint(method, endpoint, data = null, headers = {}) {
     }
 
     const response = await fetch(url, options);
-    const responseData = await response.json();
+    const responseData = await jsonResponse();
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${responseData.error || response.statusText}`);

@@ -97,7 +97,7 @@ const response = await fetch('/api/guard/style', {
   })
 });
 
-const result = await response.json();
+const result = await jsonResponse();
 
 if (result.ok) {
   console.log('Style Analysis:', result.data);

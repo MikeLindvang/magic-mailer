@@ -125,7 +125,7 @@ async function generateEmbeddings(texts) {
     throw new Error(`Embedding generation failed: ${response.status}`);
   }
   
-  const data = await response.json();
+  const data = await jsonResponse();
   return data.data.map(item => item.embedding);
 }
 
@@ -141,7 +141,7 @@ async function waitForServer(timeout = 30000) {
     try {
       const response = await fetch(`${SERVER_URL}/api/health`);
       if (response.ok) {
-        const data = await response.json();
+        const data = await jsonResponse();
         if (data.ok) {
           console.log('✅ Server is ready');
           return true;
@@ -189,7 +189,7 @@ async function testGenerateAPI(projectId) {
     
     console.log(`📥 Response status: ${response.status}`);
     
-    const result = await response.json();
+    const result = await jsonResponse();
     
     if (response.status === 401) {
       console.log('ℹ️  Expected 401 Unauthorized (Clerk authentication required)');
@@ -238,7 +238,7 @@ async function testOtherEndpoints() {
   // Test health endpoint
   try {
     const healthResponse = await fetch(`${SERVER_URL}/api/health`);
-    const healthData = await healthResponse.json();
+    const healthData = await healthjsonResponse();
     
     if (healthResponse.ok && healthData.ok) {
       console.log('✅ Health endpoint working');

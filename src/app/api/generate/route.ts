@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
 import { generateEmailPrompt, PAS_EMAIL_CONFIG } from '@/lib/llm/prompts/generate';
-import { type Project } from '@/lib/schemas/project';
 import { zCreateDraft, type CreateDraft } from '@/lib/schemas/draft';
 import { ObjectId } from 'mongodb';
 
@@ -41,10 +41,10 @@ type GeneratedEmail = z.infer<typeof zGeneratedEmail>;
 /**
  * Response type for the generate endpoint
  */
-type GenerateResponse = ApiResponse<{
+type GenerateResponse = {
   draft: CreateDraft & { _id: string };
   contextChunks: string[];
-}>;
+};
 
 /**
  * Add UTM parameters to a URL
@@ -137,15 +137,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     } = validatedRequest;
 
     // Get database collections
-    const projectsCollection = await getColl<Project>('projects');
+    const projectsCollection = await getColl('projects');
     const draftsCollection = await getColl('drafts');
 
     // Validate ObjectId format for projectId
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' },
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Fetch project and verify ownership
@@ -155,10 +152,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' },
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Use custom query or default to project name
@@ -173,17 +167,14 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Get selected chunks by their IDs
       const selectedChunks = await chunksCollection
         .find({ 
-          _id: { $in: selectedChunkIds },
+          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) },
           projectId,
           userId 
         })
         .toArray();
 
       if (selectedChunks.length === 0) {
-        return Response.json(
-          { ok: false, error: 'Selected chunks not found or access denied' },
-          { status: 400 }
-        );
+        return errorResponse('Selected chunks not found or access denied', 400);
       }
 
       // Convert to the expected format
@@ -218,10 +209,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       });
 
       if (!retrievalResult.contextPack || retrievalResult.chunks.length === 0) {
-        return Response.json(
-          { ok: false, error: 'No relevant content found for email generation' },
-          { status: 400 }
-        );
+        return errorResponse('No relevant content found for email generation', 400);
       }
     }
 
@@ -261,7 +249,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Create draft object
-    const draftId = new ObjectId().toString();
+    const draftId = new ObjectId();
     const now = new Date();
     
     const draft: CreateDraft = {
@@ -303,34 +291,28 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Return success response
     const response: GenerateResponse = {
-      ok: true,
-      data: {
-        draft: {
-          _id: draftId,
-          ...validatedDraft
-        },
-        contextChunks: retrievalResult.chunks.map(chunk => chunk.chunkId)
-      }
+      draft: {
+        _id: draftId.toString(),
+        ...validatedDraft
+      },
+      contextChunks: retrievalResult.chunks.map(chunk => chunk.chunkId)
     };
 
-    return Response.json(response);
+    return successResponse(response);
 
   } catch (error) {
     console.error('Email generation error:', error);
     
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { ok: false, error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` },
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
 
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Email generation failed' 
-      },
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Email generation failed',
+      500
     );
   }
 }

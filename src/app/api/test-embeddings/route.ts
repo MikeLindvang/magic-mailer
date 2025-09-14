@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireUser, ApiResponse } from '@/lib/auth/requireUser';
+import { jsonResponse } from '@/lib/api/response';
 import { embedMany } from '@/lib/vector/embeddings';
 import { getEmbeddingStats } from '@/lib/retrieval/vector';
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       },
     };
 
-    return Response.json(response);
+    return jsonResponse(response);
 
   } catch (error) {
     console.error('Test embeddings API error:', error);
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         ok: false,
         error: `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
       };
-      return Response.json(response, { status: 400 });
+      return jsonResponse(response, { status: 400 });
     }
 
     // Handle other errors
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       ok: false,
       error: error instanceof Error ? error.message : 'Test embeddings failed',
     };
-    return Response.json(response, { status: 500 });
+    return jsonResponse(response, { status: 500 });
   }
 }
 
@@ -134,7 +135,7 @@ export async function GET(): Promise<Response> {
       },
     };
 
-    return Response.json(response);
+    return jsonResponse(response);
 
   } catch (error) {
     console.error('Embedding health check failed:', error);
@@ -143,6 +144,6 @@ export async function GET(): Promise<Response> {
       ok: false,
       error: error instanceof Error ? error.message : 'Embedding system not working',
     };
-    return Response.json(response, { status: 500 });
+    return jsonResponse(response, { status: 500 });
   }
 }

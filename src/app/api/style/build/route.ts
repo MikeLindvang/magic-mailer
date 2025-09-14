@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid';
 import OpenAI from 'openai';
 
 import { requireUser } from '@/lib/auth/requireUser';
+import { jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type StyleProfile } from '@/lib/schemas/styleProfile';
 import { 
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const styleProfileId = nanoid();
 
     // Create style profile object
-    const styleProfile: Omit<StyleProfile, '_id' | 'createdAt'> & { _id: string } = {
+    const styleProfile: StyleProfile = {
       _id: styleProfileId,
       ownerId: userId,
       style_card: styleCard,
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     console.log(`Style profile ${styleProfileId} created successfully for user ${userId}`);
 
-    return Response.json({
+    return jsonResponse({
       ok: true,
       data: { style_profile_id: styleProfileId }
     });
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      return Response.json({
+      return jsonResponse({
         ok: false,
         error: `Validation error: ${error.errors.map(e => e.message).join(', ')}`
       }, { status: 400 });
@@ -141,14 +142,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Handle OpenAI API errors
     if (error instanceof OpenAI.APIError) {
       console.error('OpenAI API Error:', error.status, error.message);
-      return Response.json({
+      return jsonResponse({
         ok: false,
         error: 'AI analysis service temporarily unavailable'
       }, { status: 503 });
     }
 
     // Generic error response
-    return Response.json({
+    return jsonResponse({
       ok: false,
       error: error instanceof Error ? error.message : 'Failed to build style card'
     }, { status: 500 });
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest): Promise<Response> {
  * Returns information about the style card building endpoint
  */
 export async function GET(): Promise<Response> {
-  return Response.json({
+  return jsonResponse({
     ok: true,
     data: {
       endpoint: '/api/style/build',

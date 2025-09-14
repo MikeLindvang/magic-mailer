@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db/mongo';
 import { ensureIndexes } from '@/lib/db/indexes';
+import { jsonResponse } from '@/lib/api/response';
 
 export async function GET() {
   try {
@@ -12,7 +13,7 @@ export async function GET() {
     // Ensure database indexes are created
     await ensureIndexes();
 
-    return NextResponse.json({
+    return jsonResponse({
       ok: true,
       data: {
         collections: collectionNames,
@@ -23,7 +24,7 @@ export async function GET() {
   } catch (error) {
     console.error('Health check failed:', error);
     
-    return NextResponse.json(
+    return jsonResponse(
       {
         ok: false,
         error: error instanceof Error ? error.message : 'Database connection failed',

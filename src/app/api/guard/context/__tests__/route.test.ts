@@ -51,7 +51,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(401);
       expect(data.ok).toBe(false);
@@ -66,7 +66,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(400);
       expect(data.ok).toBe(false);
@@ -80,7 +80,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(400);
       expect(data.ok).toBe(false);
@@ -94,7 +94,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(400);
       expect(data.ok).toBe(false);
@@ -127,7 +127,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(200);
       expect(data.ok).toBe(true);
@@ -207,7 +207,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(200);
       expect(data.ok).toBe(true);
@@ -252,7 +252,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(200);
       expect(data.data.claims[0].confidence).toBe(1.0); // Clamped to max
@@ -274,7 +274,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(500);
       expect(data.ok).toBe(false);
@@ -301,7 +301,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(500);
       expect(data.ok).toBe(false);
@@ -325,7 +325,7 @@ describe('/api/guard/context', () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const data = await jsonResponse();
 
       expect(response.status).toBe(500);
       expect(data.ok).toBe(false);

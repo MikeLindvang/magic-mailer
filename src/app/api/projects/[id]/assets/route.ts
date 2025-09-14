@@ -1,4 +1,5 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Asset } from '@/lib/schemas/asset';
 import { type Chunk } from '@/lib/schemas/chunk';
@@ -33,10 +34,7 @@ export async function GET(
   try {
     // Validate ObjectId format
     if (!ObjectId.isValid(projectId)) {
-      return Response.json(
-        { ok: false, error: 'Invalid project ID format' } as ApiResponse<never>,
-        { status: 400 }
-      );
+      return errorResponse('Invalid project ID format', 400);
     }
 
     // Verify project ownership
@@ -47,10 +45,7 @@ export async function GET(
     });
     
     if (!project) {
-      return Response.json(
-        { ok: false, error: 'Project not found or access denied' } as ApiResponse<never>,
-        { status: 404 }
-      );
+      return errorResponse('Project not found or access denied', 404);
     }
 
     // Get all assets for the project
@@ -76,20 +71,14 @@ export async function GET(
       })
     );
 
-    return Response.json({
-      ok: true,
-      data: assetsWithChunkCounts,
-    } as ApiResponse<AssetWithChunkCount[]>);
+    return successResponse(assetsWithChunkCounts);
 
   } catch (error) {
     console.error('Error fetching assets:', error);
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

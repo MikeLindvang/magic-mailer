@@ -167,7 +167,7 @@ const response = await fetch('/api/style/build', {
   })
 });
 
-const result = await response.json();
+const result = await jsonResponse();
 console.log('Style Profile ID:', result.data.style_profile_id);
 ```
 

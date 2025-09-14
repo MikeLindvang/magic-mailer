@@ -30,13 +30,13 @@ export async function GET(request: Request) {
     .find({ userId }) // ✅ REQUIRED: Always filter by userId
     .toArray();
     
-  return Response.json({ ok: true, data: userProjects });
+  return jsonResponse({ ok: true, data: userProjects });
 }
 
 // ❌ NEVER allow queries without userId filtering
 export async function GET() {
   const allProjects = await db.collection('projects').find({}).toArray(); // SECURITY VIOLATION
-  return Response.json({ ok: true, data: allProjects });
+  return jsonResponse({ ok: true, data: allProjects });
 }
 ```
 
@@ -150,7 +150,7 @@ These route patterns MUST be protected:
 ```typescript
 // ✅ REQUIRED: Consistent error responses
 if (!userId) {
-  return Response.json(
+  return jsonResponse(
     { ok: false, error: 'Unauthorized' },
     { status: 401 }
   );
@@ -159,7 +159,7 @@ if (!userId) {
 // ✅ REQUIRED: Resource not found (could be unauthorized or non-existent)
 const resource = await db.collection('projects').findOne({ _id, userId });
 if (!resource) {
-  return Response.json(
+  return jsonResponse(
     { ok: false, error: 'Resource not found' },
     { status: 404 }
   );
@@ -170,7 +170,7 @@ if (!resource) {
 ```typescript
 // ✅ REQUIRED: When user tries to access another user's resource
 if (resource.userId !== userId) {
-  return Response.json(
+  return jsonResponse(
     { ok: false, error: 'Forbidden' },
     { status: 403 }
   );
