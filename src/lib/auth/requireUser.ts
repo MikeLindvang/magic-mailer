@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/api/response';
 
 /**
  * Server-side helper to require user authentication for API routes
@@ -15,7 +15,7 @@ export async function requireUser(): Promise<
     if (!userId) {
       return {
         ok: false,
-        response: NextjsonResponse(
+        response: jsonResponse(
           { ok: false, error: 'Unauthorized' },
           { status: 401 }
         ),
@@ -27,7 +27,7 @@ export async function requireUser(): Promise<
     console.error('Auth error:', error);
     return {
       ok: false,
-      response: NextjsonResponse(
+      response: jsonResponse(
         { ok: false, error: 'Authentication failed' },
         { status: 500 }
       ),

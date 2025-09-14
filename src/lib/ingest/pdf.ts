@@ -23,15 +23,13 @@ export async function pdfToMarkdown(buf: Buffer): Promise<{ markdown: string; ti
     
     console.log('[PDF] Processing buffer of size:', buf.length, 'bytes');
     
-    // Try to import pdf-parse using createRequire for better CommonJS compatibility
+    // Try to import pdf-parse
     let pdfParse;
     try {
-      // Use createRequire to load CommonJS module
-      const { createRequire } = await import('module');
-      const require = createRequire(import.meta.url);
-      pdfParse = require('pdf-parse');
+      // Try dynamic import first
+      pdfParse = (await import('pdf-parse')).default;
       
-      console.log('[PDF] Successfully loaded pdf-parse via require');
+      console.log('[PDF] Successfully loaded pdf-parse via dynamic import');
       
       if (typeof pdfParse !== 'function') {
         throw new Error('pdf-parse module did not export a function');
@@ -244,9 +242,7 @@ export async function extractPdfMetadata(buf: Buffer): Promise<{
     }
     
     // For metadata, we need to call pdf-parse to get the info object
-    const { createRequire } = await import('module');
-    const require = createRequire(import.meta.url);
-    const pdfParse = require('pdf-parse');
+    const pdfParse = (await import('pdf-parse')).default;
     
     const data = await pdfParse(buf);
     const info = data.info || {};

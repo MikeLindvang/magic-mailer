@@ -10,7 +10,6 @@ export function AuthButtons() {
       <button 
         className="tactile-button inline-block text-center px-8 py-4"
         onClick={() => openSignUp({
-          routing: 'hash',
           redirectUrl: '/projects',
         })}
       >
@@ -20,7 +19,6 @@ export function AuthButtons() {
       <button 
         className="tactile-button-secondary inline-block text-center px-8 py-4"
         onClick={() => openSignIn({
-          routing: 'hash',
           redirectUrl: '/projects',
         })}
       >

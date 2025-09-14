@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+// Index route
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth/requireUser';
 import { jsonResponse } from '@/lib/api/response';

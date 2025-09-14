@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+// Health check endpoint
 import { getDb } from '@/lib/db/mongo';
 import { ensureIndexes } from '@/lib/db/indexes';
 import { jsonResponse } from '@/lib/api/response';

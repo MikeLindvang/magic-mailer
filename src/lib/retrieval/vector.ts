@@ -85,7 +85,7 @@ export async function vectorSearch(
     const projectChunks = await chunks
       .find({
         projectId,
-        embedding: { $exists: true, $ne: null },
+        embedding: { $exists: true, $type: "array" },
         'embedding.0': { $exists: true } // Ensure embedding array is not empty
       })
       .toArray();
@@ -152,7 +152,7 @@ export async function getEmbeddingStats(projectId: string): Promise<{
     chunks.countDocuments({ projectId }),
     chunks.countDocuments({
       projectId,
-      embedding: { $exists: true, $ne: null },
+      embedding: { $exists: true, $type: "array" },
       'embedding.0': { $exists: true }
     })
   ]);
@@ -160,7 +160,7 @@ export async function getEmbeddingStats(projectId: string): Promise<{
   // Get a sample chunk to determine embedding dimensions
   const sampleChunk = await chunks.findOne({
     projectId,
-    embedding: { $exists: true, $ne: null },
+    embedding: { $exists: true, $type: "array" },
     'embedding.0': { $exists: true }
   });
 

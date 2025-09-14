@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireUser, ApiResponse } from '@/lib/auth/requireUser';
-import { successResponse, errorResponse, jsonResponse } from '@/lib/api/response';
+import { jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Project } from '@/lib/schemas/project';
 import { hybridRetrieve, HybridRetrievalResponse } from '@/lib/retrieval/hybrid';

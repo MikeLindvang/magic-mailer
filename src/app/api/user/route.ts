@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+// User route
 import { requireUser } from '@/lib/auth/requireUser';
 import { jsonResponse } from '@/lib/api/response';
 

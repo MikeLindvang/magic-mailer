@@ -109,7 +109,7 @@ export async function buildStyleCardFromClient(emails: EmailAnalysisInput[]): Pr
       body: JSON.stringify({ emails }),
     });
 
-    const result = await jsonResponse();
+    const result = await response.json();
     
     if (result.ok) {
       console.log('Style card built successfully!');
@@ -179,7 +179,7 @@ export async function buildStyleCardFromServer(
       body: JSON.stringify({ emails }),
     });
 
-    const result = await jsonResponse();
+    const result = await response.json();
     
     if (result.ok) {
       return result.data.style_profile_id;
