@@ -1,0 +1,86 @@
+---
+alwaysApply: true
+description: "Tactile Digital Design System - Core principles and styling guidelines"
+---
+
+# Tactile Digital Design System
+
+This project follows a "tactile digital" design philosophy that rejects cold, flat aesthetics in favor of warm, human, and grounded design elements.
+
+## Core Design Principles
+
+### 1. Human-Centered Aesthetics
+- **Reject**: Sharp corners, perfect geometric shapes, cold colors
+- **Embrace**: Organic shapes, warm colors, imperfect but intentional asymmetry
+- **Goal**: Create digital experiences that feel physical and approachable
+
+### 2. Typography Hierarchy
+- **Headlines**: Use `font-headline` (Playfair Display) for all h1-h6 elements
+- **Body Text**: Use `font-body` (Inter) for paragraphs, buttons, inputs, and UI text
+- **Never**: Mix serif and sans-serif inappropriately
+- **Always**: Maintain clear hierarchy with headline fonts for emphasis
+
+### 3. Color Philosophy
+- **Primary Palette**: 
+  - `bg-parchment` (#F8F5EE) - Warm, paper-like background
+  - `text-charcoal` (#2B2A2D) - Rich, deep text color
+  - `bg-terracotta` (#D98666) - Warm accent for CTAs
+  - `bg-sage` (#88A89A) - Subtle secondary accent
+- **Usage**: Colors should evoke natural materials (paper, clay, stone)
+
+### 4. Shape Language
+- **Default Border Radius**: Use custom squircle variations instead of standard rounded corners
+  - `rounded-squircle` - Primary asymmetric shape (2rem 1rem 1rem 2rem)
+  - `rounded-squircle-sm` - Smaller elements (1.5rem 0.75rem 0.75rem 1.5rem)
+  - `rounded-squircle-lg` - Large elements (2.5rem 1.25rem 1.25rem 2.5rem)
+  - `rounded-squircle-alt` - Alternative shape (1rem 2rem 2rem 1rem)
+- **Avoid**: Perfect circles (`rounded-full`) and standard rectangles (`rounded-lg`)
+
+### 5. Depth and Texture
+- **Shadows**: Always use paper-like shadows (`shadow-paper`, `shadow-paper-lg`, `shadow-paper-xl`)
+- **Texture**: Apply `bg-grain` to main backgrounds for subtle texture
+- **Layering**: Use `paper-texture` class for enhanced tactile feel on cards
+
+## Component Standards
+
+### Cards
+```tsx
+// ✅ Correct - Tactile card with organic shape and depth
+<div className="tactile-card paper-texture p-8">
+  <h2 className="font-headline text-charcoal">Card Title</h2>
+  <p className="font-body text-charcoal/80">Card content</p>
+</div>
+
+// ❌ Wrong - Generic card without tactile qualities
+<div className="bg-white rounded-lg shadow-md p-8">
+  <h2>Card Title</h2>
+  <p>Card content</p>
+</div>
+```
+
+### Buttons
+```tsx
+// ✅ Correct - Tactile buttons with proper styling
+<button className="tactile-button">Primary Action</button>
+<button className="tactile-button-secondary">Secondary Action</button>
+
+// ❌ Wrong - Generic button without tactile qualities
+<button className="bg-blue-500 text-white rounded-md px-4 py-2">
+  Button
+</button>
+```
+
+### Form Inputs
+```tsx
+// ✅ Correct - Tactile input with organic shape
+<input className="tactile-input" placeholder="Enter text..." />
+
+// ❌ Wrong - Standard input without tactile qualities
+<input className="border rounded-md px-3 py-2" />
+```
+
+## File References
+- Color palette: [tailwind.config.js](mdc:tailwind.config.js)
+- Component styles: [src/app/globals.css](mdc:src/app/globals.css)
+- Typography setup: [src/app/layout.tsx](mdc:src/app/layout.tsx)
+- Design showcase: [src/components/tactile-demo.tsx](mdc:src/components/tactile-demo.tsx)

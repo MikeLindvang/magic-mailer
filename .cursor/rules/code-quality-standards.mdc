@@ -1,0 +1,321 @@
+---
+alwaysApply: true
+---
+# Code Quality Standards
+
+## Component Implementation Standards
+
+### 1. Semantic HTML and Accessibility
+Always use proper semantic HTML with the tactile design system:
+
+```tsx
+// ✅ Correct - Semantic HTML with tactile styling
+<main className="bg-parchment bg-grain min-h-screen">
+  <section className="max-w-4xl mx-auto p-8">
+    <article className="tactile-card paper-texture p-8">
+      <header>
+        <h1 className="font-headline text-charcoal text-4xl font-bold mb-4">
+          Article Title
+        </h1>
+      </header>
+      <div className="prose">
+        <p className="font-body text-charcoal/80 leading-relaxed">
+          Article content with proper semantic structure.
+        </p>
+      </div>
+    </article>
+  </section>
+</main>
+
+// ❌ Wrong - Generic divs without semantic meaning
+<div className="tactile-card">
+  <div className="font-headline text-4xl">Title</div>
+  <div className="font-body">Content</div>
+</div>
+```
+
+### 2. TypeScript Implementation
+All components must be properly typed:
+
+```tsx
+// ✅ Correct - Proper TypeScript interfaces
+interface TactileButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  onClick?: () => void;
+  className?: string;
+}
+
+export function TactileButton({ 
+  children, 
+  variant = 'primary', 
+  size = 'md',
+  disabled = false,
+  onClick,
+  className = ''
+}: TactileButtonProps) {
+  const baseClasses = variant === 'primary' 
+    ? 'tactile-button' 
+    : 'tactile-button-secondary';
+    
+  return (
+    <button 
+      className={`${baseClasses} ${className}`}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+// ❌ Wrong - No types, unclear props
+export function Button({ children, ...props }) {
+  return <button className="tactile-button" {...props}>{children}</button>;
+}
+```
+
+### 3. Component Composition Patterns
+Follow consistent composition patterns:
+
+```tsx
+// ✅ Correct - Composable tactile components
+export function TactileCard({ 
+  children, 
+  className = '',
+  withTexture = true 
+}: {
+  children: React.ReactNode;
+  className?: string;
+  withTexture?: boolean;
+}) {
+  const textureClass = withTexture ? 'paper-texture' : '';
+  
+  return (
+    <div className={`tactile-card ${textureClass} ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// Usage
+<TactileCard withTexture className="p-8">
+  <h2 className="font-headline text-charcoal mb-4">Card Title</h2>
+  <p className="font-body text-charcoal/80">Card content</p>
+</TactileCard>
+```
+
+## CSS Implementation Standards
+
+### 1. Utility-First with Custom Components
+Balance Tailwind utilities with custom component classes:
+
+```css
+/* ✅ Correct - Custom component with Tailwind utilities */
+@layer components {
+  .tactile-form-group {
+    @apply space-y-2 mb-6;
+  }
+  
+  .tactile-form-group label {
+    @apply block text-sm font-body font-medium text-charcoal;
+  }
+  
+  .tactile-form-group input {
+    @apply tactile-input w-full;
+  }
+  
+  .tactile-form-group .error {
+    @apply text-terracotta text-sm font-body;
+  }
+}
+
+/* ❌ Wrong - Overly specific CSS without utility classes */
+.form-group {
+  margin-bottom: 24px;
+}
+.form-group label {
+  display: block;
+  font-size: 14px;
+  color: #2B2A2D;
+  margin-bottom: 8px;
+}
+```
+
+### 2. Performance Optimization
+Optimize CSS for performance:
+
+```css
+/* ✅ Correct - Efficient selectors and transforms */
+.tactile-button {
+  @apply bg-terracotta text-parchment font-body font-medium px-6 py-3 rounded-squircle shadow-paper;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.tactile-button:hover {
+  transform: translateY(-1px);
+  @apply shadow-paper-lg;
+}
+
+.tactile-button:active {
+  transform: translateY(0.5px);
+  @apply shadow-paper-inner;
+}
+
+/* ❌ Wrong - Inefficient animations and selectors */
+.tactile-button {
+  transition: all 300ms ease-in-out;
+}
+
+.tactile-button:hover {
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  background: linear-gradient(45deg, #D98666, #E09677);
+}
+```
+
+## File Organization Standards
+
+### 1. Component File Structure
+```
+src/
+  components/
+    ui/
+      tactile-button.tsx      # Individual components
+      tactile-card.tsx
+      tactile-input.tsx
+      index.ts                # Export barrel
+    layout/
+      header.tsx
+      sidebar.tsx
+    forms/
+      contact-form.tsx        # Composed components
+    tactile-demo.tsx          # Demo/example components
+```
+
+### 2. CSS File Organization
+```
+src/
+  app/
+    globals.css               # Global styles and component definitions
+  styles/
+    components/               # Individual component styles (if needed)
+    utilities/                # Custom utility classes
+```
+
+### 3. Import Organization
+```tsx
+// ✅ Correct import order
+import React from 'react';                    // React imports
+import { useState, useEffect } from 'react';  // React hooks
+import { NextPage } from 'next';              // Next.js imports
+
+import { Button } from '@/components/ui';     // Internal components
+import { cn } from '@/lib/utils';             // Internal utilities
+
+import './component.css';                     // Styles (if any)
+```
+
+## Testing Standards
+
+### 1. Component Testing
+```tsx
+// ✅ Test tactile components for accessibility and functionality
+import { render, screen, fireEvent } from '@testing-library/react';
+import { TactileButton } from './tactile-button';
+
+describe('TactileButton', () => {
+  it('applies correct tactile styling classes', () => {
+    render(<TactileButton>Test Button</TactileButton>);
+    const button = screen.getByRole('button');
+    expect(button).toHaveClass('tactile-button');
+  });
+
+  it('provides tactile feedback on interaction', () => {
+    const onClick = jest.fn();
+    render(<TactileButton onClick={onClick}>Test</TactileButton>);
+    
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalled();
+  });
+
+  it('meets accessibility standards', async () => {
+    const { container } = render(<TactileButton>Accessible Button</TactileButton>);
+    // Add axe-core accessibility testing
+  });
+});
+```
+
+## Performance Standards
+
+### 1. Bundle Size Optimization
+- Use tree-shaking friendly imports
+- Lazy load components when appropriate
+- Optimize font loading with `display: swap`
+
+### 2. Runtime Performance
+- Use `transform` and `opacity` for animations
+- Avoid layout thrashing in interactions
+- Implement proper memoization for complex components
+
+```tsx
+// ✅ Optimized component with proper memoization
+import { memo } from 'react';
+
+export const TactileCard = memo(function TactileCard({ 
+  children, 
+  className = '' 
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`tactile-card paper-texture ${className}`}>
+      {children}
+    </div>
+  );
+});
+```
+
+## Documentation Standards
+
+### 1. Component Documentation
+```tsx
+/**
+ * TactileButton - A button component following the tactile design system
+ * 
+ * Features:
+ * - Organic squircle shape with asymmetric border radius
+ * - Paper-like shadows that respond to interaction
+ * - Warm color palette (terracotta primary, sage secondary)
+ * - Smooth tactile feedback on hover/active states
+ * 
+ * @param children - Button content
+ * @param variant - 'primary' (terracotta) or 'secondary' (sage)
+ * @param disabled - Whether the button is disabled
+ * @param onClick - Click handler function
+ * @param className - Additional CSS classes
+ */
+export function TactileButton({ ... }) {
+  // Implementation
+}
+```
+
+### 2. Usage Examples
+Include practical usage examples in component files:
+
+```tsx
+// Usage Examples:
+// 
+// Primary button:
+// <TactileButton onClick={handleSubmit}>Submit Form</TactileButton>
+//
+// Secondary button:
+// <TactileButton variant="secondary" onClick={handleCancel}>Cancel</TactileButton>
+//
+// With custom styling:
+// <TactileButton className="w-full mt-4">Full Width Button</TactileButton>
+```

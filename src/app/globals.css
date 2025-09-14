@@ -1,26 +1,156 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Tactile Digital Color Variables */
+  --parchment: #F8F5EE;
+  --charcoal: #2B2A2D;
+  --terracotta: #D98666;
+  --sage: #88A89A;
+  
+  /* Updated shadcn/ui variables for tactile theme */
+  --background: 248 95% 93%; /* Parchment background */
+  --foreground: 240 6% 17%; /* Charcoal text */
+  --card: 248 95% 93%;
+  --card-foreground: 240 6% 17%;
+  --popover: 248 95% 93%;
+  --popover-foreground: 240 6% 17%;
+  --primary: 240 6% 17%; /* Charcoal */
+  --primary-foreground: 248 95% 93%;
+  --secondary: 140 15% 57%; /* Sage */
+  --secondary-foreground: 240 6% 17%;
+  --muted: 248 95% 90%;
+  --muted-foreground: 240 6% 45%;
+  --accent: 18 54% 63%; /* Terracotta */
+  --accent-foreground: 248 95% 93%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 6% 85%;
+  --input: 248 95% 90%;
+  --ring: 240 6% 17%;
+  --chart-1: 18 54% 63%;
+  --chart-2: 140 15% 57%;
+  --chart-3: 240 6% 17%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --radius: 0.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-parchment bg-grain text-charcoal font-body;
+    background-attachment: fixed;
+  }
+  
+  /* Typography base styles */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline text-charcoal;
+  }
+  
+  p, span, div, a, button, input, textarea {
+    @apply font-body;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  /* Tactile Digital Component Styles */
+  .tactile-card {
+    @apply bg-parchment rounded-squircle shadow-paper border border-charcoal/10;
+    position: relative;
+  }
+  
+  .tactile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--parchment);
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(43, 42, 45, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(136, 168, 154, 0.02) 0%, transparent 50%);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .tactile-button {
+    @apply bg-terracotta text-parchment font-body font-medium px-6 py-3 rounded-squircle shadow-paper;
+    @apply hover:bg-terracotta/90 hover:shadow-paper-lg transition-all duration-200;
+    @apply active:shadow-paper-inner active:translate-y-0.5;
+  }
+  
+  .tactile-button-secondary {
+    @apply bg-sage text-charcoal font-body font-medium px-6 py-3 rounded-squircle shadow-paper;
+    @apply hover:bg-sage/90 hover:shadow-paper-lg transition-all duration-200;
+    @apply active:shadow-paper-inner active:translate-y-0.5;
+  }
+  
+  .tactile-input {
+    @apply bg-parchment/50 border-2 border-charcoal/20 rounded-squircle-sm px-4 py-2 font-body;
+    @apply focus:border-sage focus:outline-none focus:shadow-paper-inner transition-all duration-200;
+  }
+  
+  /* Paper texture overlay for enhanced tactile feel */
+  .paper-texture {
+    position: relative;
+  }
+  
+  .paper-texture::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(43, 42, 45, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(217, 134, 102, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(136, 168, 154, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
 }

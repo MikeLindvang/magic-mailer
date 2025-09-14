@@ -1,0 +1,242 @@
+---
+alwaysApply: true
+description: "Ensures users can only access their own content through proper authentication and authorization patterns"
+---
+
+# User Access Control Standards
+
+## CRITICAL SECURITY REQUIREMENT
+**Every user must only access their own content**. All data operations must be scoped to the authenticated user's `userId`.
+
+## Authentication Patterns
+
+### API Route Protection
+ALL API routes (except `/api/health`) must use the `requireUser` helper:
+
+```typescript
+// ✅ REQUIRED pattern for all API routes
+import { requireUser } from '@/lib/auth/requireUser';
+
+export async function GET(request: Request) {
+  const authResult = await requireUser();
+  if (!authResult.ok) {
+    return authResult.response; // Returns 401 Unauthorized
+  }
+  
+  const { userId } = authResult;
+  
+  // ALL database queries MUST filter by userId
+  const userProjects = await db.collection('projects')
+    .find({ userId }) // ✅ REQUIRED: Always filter by userId
+    .toArray();
+    
+  return Response.json({ ok: true, data: userProjects });
+}
+
+// ❌ NEVER allow queries without userId filtering
+export async function GET() {
+  const allProjects = await db.collection('projects').find({}).toArray(); // SECURITY VIOLATION
+  return Response.json({ ok: true, data: allProjects });
+}
+```
+
+### Server Component Protection
+Protected pages must verify authentication and redirect if needed:
+
+```typescript
+// ✅ REQUIRED pattern for protected pages
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
+  // ALL database queries MUST include userId filter
+  const project = await db.collection('projects')
+    .findOne({ _id: params.id, userId }); // ✅ REQUIRED: userId filter
+    
+  if (!project) {
+    redirect('/projects'); // Project doesn't exist or doesn't belong to user
+  }
+
+  return <ProjectDetails project={project} />;
+}
+```
+
+### Client Component Protection
+Use Clerk hooks for client-side protection:
+
+```typescript
+// ✅ REQUIRED pattern for client components accessing user data
+'use client';
+import { useAuth, useUser } from '@clerk/nextjs';
+
+export function UserDashboard() {
+  const { userId, isLoaded } = useAuth();
+  const { user } = useUser();
+  
+  if (!isLoaded) return <LoadingSpinner />;
+  if (!userId) return <SignInPrompt />;
+  
+  // Component can now safely access user-specific data
+  return <Dashboard userId={userId} />;
+}
+```
+
+## Database Query Patterns
+
+### MongoDB Query Requirements
+ALL database operations MUST include userId filtering:
+
+```typescript
+// ✅ REQUIRED: Always filter by userId
+const userProjects = await db.collection('projects').find({ userId }).toArray();
+const userProject = await db.collection('projects').findOne({ _id, userId });
+
+// ✅ REQUIRED: Include userId in updates
+await db.collection('projects').updateOne(
+  { _id, userId }, // Must verify ownership
+  { $set: updateData }
+);
+
+// ✅ REQUIRED: Include userId in deletions
+await db.collection('projects').deleteOne({ _id, userId });
+
+// ❌ NEVER query without userId (except for system operations)
+const allProjects = await db.collection('projects').find({}).toArray(); // VIOLATION
+```
+
+### Aggregation Pipeline Requirements
+When using aggregation, always start with userId matching:
+
+```typescript
+// ✅ REQUIRED: Start aggregation with userId filter
+const pipeline = [
+  { $match: { userId } }, // FIRST stage must filter by userId
+  { $lookup: { ... } },
+  { $group: { ... } }
+];
+
+const results = await db.collection('projects').aggregate(pipeline).toArray();
+```
+
+## Route Protection Configuration
+
+### Middleware Configuration
+The middleware in [src/middleware.ts](mdc:src/middleware.ts) must protect all sensitive routes:
+
+```typescript
+const isProtectedRoute = createRouteMatcher([
+  '/projects(.*)',           // All project routes
+  '/api/((?!health$).*)',   // All API routes except health
+  '/dashboard(.*)',         // All dashboard routes
+  '/settings(.*)',          // All settings routes
+]);
+```
+
+### Required Protected Routes
+These route patterns MUST be protected:
+- `/projects/*` - All project-related pages
+- `/api/*` - All API endpoints (except `/api/health`)
+- `/dashboard/*` - User dashboard areas
+- `/settings/*` - User settings pages
+
+## Error Handling Patterns
+
+### Unauthorized Access
+```typescript
+// ✅ REQUIRED: Consistent error responses
+if (!userId) {
+  return Response.json(
+    { ok: false, error: 'Unauthorized' },
+    { status: 401 }
+  );
+}
+
+// ✅ REQUIRED: Resource not found (could be unauthorized or non-existent)
+const resource = await db.collection('projects').findOne({ _id, userId });
+if (!resource) {
+  return Response.json(
+    { ok: false, error: 'Resource not found' },
+    { status: 404 }
+  );
+}
+```
+
+### Forbidden Access
+```typescript
+// ✅ REQUIRED: When user tries to access another user's resource
+if (resource.userId !== userId) {
+  return Response.json(
+    { ok: false, error: 'Forbidden' },
+    { status: 403 }
+  );
+}
+```
+
+## Testing Requirements
+
+### Security Test Patterns
+ALL user-scoped endpoints must be tested for proper isolation:
+
+```typescript
+// ✅ REQUIRED: Test user isolation
+describe('User Access Control', () => {
+  it('should only return current user projects', async () => {
+    const user1Projects = await getProjects(user1Id);
+    const user2Projects = await getProjects(user2Id);
+    
+    // Verify no cross-user data leakage
+    expect(user1Projects.every(p => p.userId === user1Id)).toBe(true);
+    expect(user2Projects.every(p => p.userId === user2Id)).toBe(true);
+  });
+  
+  it('should reject access to other user resources', async () => {
+    const response = await fetch(`/api/projects/${user1ProjectId}`, {
+      headers: { Authorization: `Bearer ${user2Token}` }
+    });
+    
+    expect(response.status).toBe(404); // Should not reveal existence
+  });
+});
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ Global Data Access
+```typescript
+// NEVER allow unrestricted queries
+const allUsers = await db.collection('users').find({}).toArray(); // VIOLATION
+const allProjects = await db.collection('projects').find({}).toArray(); // VIOLATION
+```
+
+### ❌ Client-Side Authorization
+```typescript
+// NEVER rely on client-side checks for security
+if (user.role === 'admin') { // Client-side check is not secure
+  // Show admin features
+}
+```
+
+### ❌ Trusting Client Data
+```typescript
+// NEVER trust userId from client requests
+export async function POST(request: Request) {
+  const { userId } = await request.json(); // NEVER trust this
+  // Always get userId from auth() instead
+}
+```
+
+## Implementation Checklist
+
+For every new feature:
+- [ ] API routes use `requireUser()` helper
+- [ ] Database queries include `userId` filter
+- [ ] Server components verify authentication
+- [ ] Client components handle loading/unauthenticated states
+- [ ] Error responses don't leak information about other users' data
+- [ ] Tests verify user isolation
+- [ ] No global data access without explicit system-level authorization

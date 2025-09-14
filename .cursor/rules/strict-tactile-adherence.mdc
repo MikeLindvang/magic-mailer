@@ -1,0 +1,402 @@
+---
+alwaysApply: true
+description: "Enforces strict adherence to tactile design system across all components and prevents style violations"
+---
+
+# Strict Tactile Design Adherence
+
+## CRITICAL REQUIREMENT
+**ALL components and styling MUST strictly follow the tactile design system**. No exceptions for generic Material Design, flat design, or cold aesthetics.
+
+## Typography Enforcement
+
+### MANDATORY Font Usage
+```typescript
+// ✅ REQUIRED: Proper font class usage
+<h1 className="font-headline text-charcoal text-4xl font-bold">
+  Headlines MUST use font-headline (Playfair Display)
+</h1>
+
+<p className="font-body text-charcoal/80 leading-relaxed">
+  Body text MUST use font-body (Inter)
+</p>
+
+<button className="font-body font-medium">
+  UI elements MUST use font-body
+</button>
+
+// ❌ VIOLATIONS - These patterns are FORBIDDEN
+<h1 className="font-sans">Wrong Font</h1>
+<h1 className="font-serif">Wrong Font</h1>
+<p className="font-mono">Wrong Font</p>
+<button className="font-bold">Missing font-body</button>
+```
+
+### Typography Hierarchy Rules
+- **Headlines (h1-h6)**: MUST use `font-headline` + `text-charcoal`
+- **Body text (p, span, div)**: MUST use `font-body` + `text-charcoal/80` for secondary
+- **UI elements (button, input, label)**: MUST use `font-body`
+- **NEVER**: Mix serif and sans-serif inappropriately
+
+## Color Palette Enforcement
+
+### MANDATORY Color Usage
+```typescript
+// ✅ REQUIRED: Tactile color palette only
+<div className="bg-parchment text-charcoal">
+  <button className="bg-terracotta text-parchment">Primary Action</button>
+  <button className="bg-sage text-charcoal">Secondary Action</button>
+</div>
+
+// ❌ VIOLATIONS - These colors are FORBIDDEN
+<div className="bg-white">Pure white backgrounds</div>
+<div className="bg-gray-100">Generic gray backgrounds</div>
+<div className="text-black">Pure black text</div>
+<button className="bg-blue-500">Generic blue buttons</button>
+<button className="bg-red-500">Generic red buttons</button>
+<div className="bg-slate-200">Cold slate colors</div>
+```
+
+### Required Color Combinations
+- **Backgrounds**: `bg-parchment` (primary), `bg-parchment/50` (overlays)
+- **Text**: `text-charcoal` (primary), `text-charcoal/80` (secondary), `text-charcoal/60` (tertiary)
+- **Primary Actions**: `bg-terracotta` + `text-parchment`
+- **Secondary Actions**: `bg-sage` + `text-charcoal`
+- **Borders**: `border-charcoal/10` (subtle), `border-charcoal/20` (visible)
+
+## Shape Language Enforcement
+
+### MANDATORY Border Radius Usage
+```css
+/* ✅ REQUIRED: Squircle shapes only */
+.tactile-card {
+  @apply rounded-squircle; /* 2rem 1rem 1rem 2rem */
+}
+
+.tactile-button {
+  @apply rounded-squircle; /* Organic asymmetric shape */
+}
+
+.tactile-input {
+  @apply rounded-squircle-sm; /* 1.5rem 0.75rem 0.75rem 1.5rem */
+}
+
+/* ❌ VIOLATIONS - These shapes are FORBIDDEN */
+.generic-card {
+  @apply rounded-lg; /* Sharp, geometric - WRONG */
+}
+
+.generic-button {
+  @apply rounded-md; /* Standard rectangle - WRONG */
+}
+
+.circle-avatar {
+  @apply rounded-full; /* Perfect circle - WRONG */
+}
+```
+
+### Shape Hierarchy
+- **Large elements**: `rounded-squircle-lg` (2.5rem 1.25rem 1.25rem 2.5rem)
+- **Standard elements**: `rounded-squircle` (2rem 1rem 1rem 2rem)
+- **Small elements**: `rounded-squircle-sm` (1.5rem 0.75rem 0.75rem 1.5rem)
+- **Alternative**: `rounded-squircle-alt` (1rem 2rem 2rem 1rem)
+
+## Component Class Enforcement
+
+### MANDATORY Component Classes
+```typescript
+// ✅ REQUIRED: Use tactile component classes
+<div className="tactile-card paper-texture p-8">
+  <button className="tactile-button">Primary</button>
+  <button className="tactile-button-secondary">Secondary</button>
+  <input className="tactile-input" />
+</div>
+
+// ❌ VIOLATIONS - Generic Tailwind classes are FORBIDDEN for these elements
+<div className="bg-white rounded-lg shadow-md p-8"> {/* Generic card */}
+<button className="bg-blue-500 text-white rounded-md px-4 py-2"> {/* Generic button */}
+<input className="border rounded-md px-3 py-2"> {/* Generic input */}
+```
+
+### Required Component Structure
+```typescript
+// ✅ REQUIRED: Proper tactile component structure
+export function TactileCard({ children, className = '' }: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`tactile-card paper-texture ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// ❌ VIOLATION: Generic component without tactile qualities
+export function GenericCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4">
+      {children}
+    </div>
+  );
+}
+```
+
+## Shadow and Depth Enforcement
+
+### MANDATORY Shadow Usage
+```css
+/* ✅ REQUIRED: Paper-like shadows only */
+.tactile-element {
+  @apply shadow-paper; /* Multi-layered depth */
+}
+
+.tactile-element:hover {
+  @apply shadow-paper-lg; /* Increased depth on hover */
+}
+
+.tactile-element:active {
+  @apply shadow-paper-inner; /* Pressed state */
+}
+
+/* ❌ VIOLATIONS - Generic shadows are FORBIDDEN */
+.generic-element {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Generic shadow - WRONG */
+}
+
+.material-element {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12); /* Material Design - WRONG */
+}
+```
+
+### Shadow Hierarchy
+- **Resting**: `shadow-paper` (subtle depth)
+- **Hover**: `shadow-paper-lg` (lifted state)
+- **Elevated**: `shadow-paper-xl` (maximum depth)
+- **Pressed**: `shadow-paper-inner` (inset shadow)
+
+## Background and Texture Enforcement
+
+### MANDATORY Background Patterns
+```typescript
+// ✅ REQUIRED: Tactile backgrounds with texture
+<main className="bg-parchment bg-grain min-h-screen">
+  <section className="tactile-card paper-texture p-8">
+    Content with proper tactile qualities
+  </section>
+</main>
+
+// ❌ VIOLATIONS - Cold, flat backgrounds are FORBIDDEN
+<main className="bg-white min-h-screen"> {/* Pure white - WRONG */}
+<section className="bg-gray-50 p-8"> {/* Generic gray - WRONG */}
+<div className="bg-slate-100"> {/* Cold slate - WRONG */}
+```
+
+### Texture Application Rules
+- **Main backgrounds**: MUST use `bg-parchment bg-grain`
+- **Card elements**: MUST use `tactile-card paper-texture`
+- **Overlays**: Use `bg-parchment/50` or `bg-parchment/80`
+- **NEVER**: Use pure white, generic grays, or cold colors
+
+## Interactive State Enforcement
+
+### MANDATORY Interaction Patterns
+```css
+/* ✅ REQUIRED: Tactile interaction states */
+.tactile-button {
+  @apply bg-terracotta text-parchment font-body font-medium px-6 py-3 rounded-squircle shadow-paper;
+  @apply hover:bg-terracotta/90 hover:shadow-paper-lg transition-all duration-200;
+  @apply active:shadow-paper-inner active:translate-y-0.5;
+}
+
+/* ❌ VIOLATIONS - Generic interaction patterns are FORBIDDEN */
+.generic-button:hover {
+  background-color: #0066CC; /* Cold blue - WRONG */
+  transform: scale(1.05); /* Scale transform - WRONG */
+}
+
+.material-button:active {
+  background-color: #004499; /* Darker blue - WRONG */
+}
+```
+
+### Required Interaction States
+- **Hover**: Lift with `shadow-paper-lg` + slight color change
+- **Active**: Press with `shadow-paper-inner` + `translate-y-0.5`
+- **Focus**: Visible focus ring with `focus:border-sage`
+- **Disabled**: Reduced opacity with `disabled:opacity-50`
+
+## Layout and Spacing Enforcement
+
+### MANDATORY Layout Patterns
+```typescript
+// ✅ REQUIRED: Generous, breathing room spacing
+<section className="max-w-4xl mx-auto p-8 lg:p-12">
+  <div className="tactile-card paper-texture p-8 space-y-6">
+    <h1 className="font-headline text-charcoal text-4xl font-bold mb-6">
+      Generous spacing for readability
+    </h1>
+    <div className="space-y-4">
+      {/* Content with proper spacing */}
+    </div>
+  </div>
+</section>
+
+// ❌ VIOLATIONS - Cramped, minimal spacing is FORBIDDEN
+<section className="max-w-full p-2"> {/* Too cramped - WRONG */}
+<div className="p-2 space-y-1"> {/* Insufficient spacing - WRONG */}
+```
+
+### Spacing Hierarchy
+- **Section padding**: `p-8` (mobile), `lg:p-12` (desktop)
+- **Card padding**: `p-8` (generous internal spacing)
+- **Content spacing**: `space-y-6` (between sections), `space-y-4` (between elements)
+- **Button padding**: `px-6 py-3` (comfortable touch targets)
+
+## Form Element Enforcement
+
+### MANDATORY Form Styling
+```typescript
+// ✅ REQUIRED: Tactile form elements
+<form className="space-y-6">
+  <div className="space-y-2">
+    <label className="block text-sm font-body font-medium text-charcoal">
+      Field Label
+    </label>
+    <input 
+      className="tactile-input w-full" 
+      placeholder="Descriptive placeholder..."
+    />
+  </div>
+  
+  <button type="submit" className="tactile-button w-full">
+    Submit Form
+  </button>
+</form>
+
+// ❌ VIOLATIONS - Generic form styling is FORBIDDEN
+<input className="border rounded-md px-3 py-2"> {/* Generic input - WRONG */}
+<button className="bg-blue-500 text-white rounded px-4 py-2"> {/* Generic button - WRONG */}
+```
+
+## CSS Architecture Enforcement
+
+### MANDATORY CSS Structure
+```css
+/* ✅ REQUIRED: Proper layer organization */
+@layer base {
+  body {
+    @apply bg-parchment bg-grain text-charcoal font-body;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline text-charcoal;
+  }
+}
+
+@layer components {
+  .tactile-card {
+    @apply bg-parchment rounded-squircle shadow-paper border border-charcoal/10;
+  }
+}
+
+/* ❌ VIOLATIONS - Generic CSS patterns are FORBIDDEN */
+.generic-card {
+  background: white; /* Pure white - WRONG */
+  border-radius: 8px; /* Sharp corners - WRONG */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Generic shadow - WRONG */
+}
+```
+
+## Anti-Pattern Detection
+
+### FORBIDDEN Patterns
+```typescript
+// ❌ These patterns MUST be rejected in code review
+const FORBIDDEN_PATTERNS = [
+  'bg-white',           // Pure white backgrounds
+  'bg-gray-',           // Generic gray colors
+  'bg-slate-',          // Cold slate colors
+  'bg-blue-',           // Generic blue colors
+  'text-black',         // Pure black text
+  'rounded-lg',         // Sharp geometric shapes
+  'rounded-md',         // Standard rectangles
+  'rounded-full',       // Perfect circles
+  'shadow-md',          // Generic shadows
+  'shadow-lg',          // Generic shadows
+  'font-sans',          // Generic sans-serif
+  'font-serif',         // Generic serif (without font-headline)
+  'font-mono',          // Monospace fonts
+  'border-gray-',       // Generic gray borders
+  'hover:scale-',       // Scale transforms
+  'transform scale',    // Scale transforms
+];
+
+// ✅ Required replacements
+const REQUIRED_REPLACEMENTS = {
+  'bg-white': 'bg-parchment',
+  'bg-gray-100': 'bg-parchment',
+  'text-black': 'text-charcoal',
+  'rounded-lg': 'rounded-squircle',
+  'shadow-md': 'shadow-paper',
+  'font-sans': 'font-body',
+};
+```
+
+## Code Review Checklist
+
+### MANDATORY Review Points
+- [ ] All backgrounds use parchment/charcoal palette
+- [ ] All text uses font-headline or font-body appropriately
+- [ ] All interactive elements use tactile component classes
+- [ ] All shapes use squircle border-radius variants
+- [ ] All shadows use paper-like shadow classes
+- [ ] All spacing follows generous tactile principles
+- [ ] No generic Material Design or flat design patterns
+- [ ] No cold colors (blues, grays, pure white/black)
+- [ ] All components have proper tactile feedback states
+- [ ] Form elements use tactile styling classes
+
+## Automated Enforcement
+
+### ESLint Rules (Recommended)
+```javascript
+// .eslintrc.js additions for tactile enforcement
+module.exports = {
+  rules: {
+    // Custom rules to detect forbidden patterns
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'Literal[value=/bg-white|bg-gray-|text-black|rounded-lg|shadow-md/]',
+        message: 'Use tactile design system classes instead of generic Tailwind classes',
+      },
+    ],
+  },
+};
+```
+
+### Pre-commit Hooks
+```bash
+# Check for forbidden patterns before commit
+grep -r "bg-white\|bg-gray-\|text-black\|rounded-lg\|shadow-md" src/ && exit 1
+```
+
+## Implementation Priority
+
+### HIGH PRIORITY Violations
+1. **Color violations**: Pure white, generic grays, cold colors
+2. **Typography violations**: Wrong font families, missing font classes
+3. **Shape violations**: Sharp corners, perfect circles
+4. **Component violations**: Generic buttons, inputs, cards
+
+### MEDIUM PRIORITY Violations
+1. **Spacing violations**: Cramped layouts, insufficient padding
+2. **Shadow violations**: Generic shadows, missing depth
+3. **Interaction violations**: Missing hover/active states
+
+### LOW PRIORITY Violations
+1. **Texture violations**: Missing paper-texture, grain backgrounds
+2. **Animation violations**: Wrong transition types, durations
+
+All violations MUST be fixed before code can be merged to main branch.

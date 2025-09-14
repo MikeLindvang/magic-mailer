@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactile Digital Design System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'headline': ['Playfair Display', 'serif'],
+                        'body': ['Inter', 'sans-serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                        'serif': ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        'parchment': '#F8F5EE',
+                        'charcoal': '#2B2A2D',
+                        'terracotta': '#D98666',
+                        'sage': '#88A89A',
+                    },
+                    borderRadius: {
+                        'squircle': '2rem 1rem 1rem 2rem',
+                        'squircle-sm': '1.5rem 0.75rem 0.75rem 1.5rem',
+                        'squircle-lg': '2.5rem 1.25rem 1.25rem 2.5rem',
+                        'squircle-alt': '1rem 2rem 2rem 1rem',
+                    },
+                    boxShadow: {
+                        'paper': '0 4px 6px -1px rgba(43, 42, 45, 0.1), 0 2px 4px -1px rgba(43, 42, 45, 0.06), 0 1px 3px 0 rgba(43, 42, 45, 0.1)',
+                        'paper-lg': '0 10px 15px -3px rgba(43, 42, 45, 0.1), 0 4px 6px -2px rgba(43, 42, 45, 0.05), 0 2px 4px 0 rgba(43, 42, 45, 0.1)',
+                        'paper-xl': '0 20px 25px -5px rgba(43, 42, 45, 0.1), 0 10px 10px -5px rgba(43, 42, 45, 0.04), 0 4px 6px 0 rgba(43, 42, 45, 0.1)',
+                        'paper-inner': 'inset 0 2px 4px 0 rgba(43, 42, 45, 0.06)',
+                    },
+                    backgroundImage: {
+                        'grain': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E\")",
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-attachment: fixed;
+        }
+        
+        /* Tactile Card Component */
+        .tactile-card {
+            position: relative;
+            background: #F8F5EE;
+            border-radius: 2rem 1rem 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(43, 42, 45, 0.1), 0 2px 4px -1px rgba(43, 42, 45, 0.06), 0 1px 3px 0 rgba(43, 42, 45, 0.1);
+            border: 1px solid rgba(43, 42, 45, 0.1);
+        }
+        
+        .tactile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #F8F5EE;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(43, 42, 45, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(136, 168, 154, 0.02) 0%, transparent 50%);
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Tactile Button Components */
+        .tactile-button {
+            background: #D98666;
+            color: #F8F5EE;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem 1rem 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(43, 42, 45, 0.1), 0 2px 4px -1px rgba(43, 42, 45, 0.06), 0 1px 3px 0 rgba(43, 42, 45, 0.1);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .tactile-button:hover {
+            background: rgba(217, 134, 102, 0.9);
+            box-shadow: 0 10px 15px -3px rgba(43, 42, 45, 0.1), 0 4px 6px -2px rgba(43, 42, 45, 0.05), 0 2px 4px 0 rgba(43, 42, 45, 0.1);
+        }
+        
+        .tactile-button:active {
+            box-shadow: inset 0 2px 4px 0 rgba(43, 42, 45, 0.06);
+            transform: translateY(0.125rem);
+        }
+        
+        .tactile-button-secondary {
+            background: #88A89A;
+            color: #2B2A2D;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem 1rem 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(43, 42, 45, 0.1), 0 2px 4px -1px rgba(43, 42, 45, 0.06), 0 1px 3px 0 rgba(43, 42, 45, 0.1);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .tactile-button-secondary:hover {
+            background: rgba(136, 168, 154, 0.9);
+            box-shadow: 0 10px 15px -3px rgba(43, 42, 45, 0.1), 0 4px 6px -2px rgba(43, 42, 45, 0.05), 0 2px 4px 0 rgba(43, 42, 45, 0.1);
+        }
+        
+        .tactile-button-secondary:active {
+            box-shadow: inset 0 2px 4px 0 rgba(43, 42, 45, 0.06);
+            transform: translateY(0.125rem);
+        }
+        
+        /* Tactile Input Component */
+        .tactile-input {
+            background: rgba(248, 245, 238, 0.5);
+            border: 2px solid rgba(43, 42, 45, 0.2);
+            border-radius: 1.5rem 0.75rem 0.75rem 1.5rem;
+            padding: 0.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            color: #2B2A2D;
+            transition: all 0.2s ease;
+        }
+        
+        .tactile-input:focus {
+            outline: none;
+            border-color: #88A89A;
+            box-shadow: inset 0 2px 4px 0 rgba(43, 42, 45, 0.06);
+        }
+        
+        /* Paper Texture Overlay */
+        .paper-texture {
+            position: relative;
+        }
+        
+        .paper-texture::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(43, 42, 45, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(217, 134, 102, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(136, 168, 154, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+    </style>
+</head>
+<body class="bg-parchment bg-grain text-charcoal font-body min-h-screen">
+    <!-- Hero Section -->
+    <div class="max-w-4xl mx-auto p-8">
+        <div class="tactile-card paper-texture p-12 mb-8">
+            <h1 class="text-5xl md:text-6xl font-headline font-bold text-charcoal mb-6 leading-tight">
+                Tactile Digital
+                <span class="block text-terracotta">Design System</span>
+            </h1>
+            <p class="text-xl text-charcoal/80 font-body mb-8 max-w-2xl leading-relaxed">
+                A design language that feels human and grounded, rejecting the cold, flat aesthetic 
+                for something more tactile and warm. Experience the difference between digital and physical.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <button class="tactile-button">Get Started</button>
+                <button class="tactile-button-secondary">Learn More</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="max-w-6xl mx-auto p-8 mb-16">
+        <h2 class="text-3xl font-headline font-semibold text-charcoal mb-8 text-center">
+            Design Principles
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="tactile-card paper-texture p-8">
+                <div class="w-16 h-16 bg-terracotta/20 rounded-squircle-sm mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-terracotta" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-headline font-semibold text-charcoal mb-4">
+                    Organic Shapes
+                </h3>
+                <p class="text-charcoal/70 font-body leading-relaxed">
+                    Custom squircle borders and asymmetric shapes that feel more natural 
+                    than perfect geometric forms.
+                </p>
+            </div>
+
+            <div class="tactile-card paper-texture p-8">
+                <div class="w-16 h-16 bg-sage/20 rounded-squircle-alt mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-sage" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-headline font-semibold text-charcoal mb-4">
+                    Layered Depth
+                </h3>
+                <p class="text-charcoal/70 font-body leading-relaxed">
+                    Multi-directional shadows and subtle textures create the illusion 
+                    of physical paper and depth.
+                </p>
+            </div>
+
+            <div class="tactile-card paper-texture p-8">
+                <div class="w-16 h-16 bg-charcoal/10 rounded-squircle mb-6 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-charcoal" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-headline font-semibold text-charcoal mb-4">
+                    Warm Typography
+                </h3>
+                <p class="text-charcoal/70 font-body leading-relaxed">
+                    Elegant serif headlines paired with clean sans-serif body text 
+                    for both personality and readability.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Form -->
+    <div class="max-w-4xl mx-auto p-8 mb-16">
+        <div class="tactile-card paper-texture p-8">
+            <h2 class="text-2xl font-headline font-semibold text-charcoal mb-6">
+                Interactive Elements
+            </h2>
+            <form class="space-y-6">
+                <div>
+                    <label class="block text-sm font-body font-medium text-charcoal mb-2">
+                        Your Name
+                    </label>
+                    <input 
+                        type="text" 
+                        placeholder="Enter your name..."
+                        class="tactile-input w-full max-w-md"
+                    />
+                </div>
+                <div>
+                    <label class="block text-sm font-body font-medium text-charcoal mb-2">
+                        Message
+                    </label>
+                    <textarea 
+                        placeholder="Tell us what you think..."
+                        class="tactile-input w-full h-32 resize-none"
+                    ></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="tactile-button">
+                        Send Message
+                    </button>
+                    <button type="button" class="tactile-button-secondary">
+                        Save Draft
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Color Palette Display -->
+    <div class="max-w-4xl mx-auto p-8">
+        <h2 class="text-2xl font-headline font-semibold text-charcoal mb-6 text-center">
+            Color Palette
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="tactile-card p-6 text-center">
+                <div class="w-full h-20 bg-parchment rounded-squircle-sm mb-4 border-2 border-charcoal/10"></div>
+                <h3 class="font-headline font-medium text-charcoal mb-1">Parchment</h3>
+                <p class="text-sm text-charcoal/60 font-body">#F8F5EE</p>
+            </div>
+            <div class="tactile-card p-6 text-center">
+                <div class="w-full h-20 bg-charcoal rounded-squircle-sm mb-4"></div>
+                <h3 class="font-headline font-medium text-charcoal mb-1">Charcoal</h3>
+                <p class="text-sm text-charcoal/60 font-body">#2B2A2D</p>
+            </div>
+            <div class="tactile-card p-6 text-center">
+                <div class="w-full h-20 bg-terracotta rounded-squircle-sm mb-4"></div>
+                <h3 class="font-headline font-medium text-charcoal mb-1">Terracotta</h3>
+                <p class="text-sm text-charcoal/60 font-body">#D98666</p>
+            </div>
+            <div class="tactile-card p-6 text-center">
+                <div class="w-full h-20 bg-sage rounded-squircle-sm mb-4"></div>
+                <h3 class="font-headline font-medium text-charcoal mb-1">Sage</h3>
+                <p class="text-sm text-charcoal/60 font-body">#88A89A</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

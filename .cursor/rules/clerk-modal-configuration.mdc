@@ -1,0 +1,426 @@
+---
+alwaysApply: true
+description: "Ensures Clerk authentication always opens in modal format with proper tactile design integration"
+---
+
+# Clerk Modal Configuration Standards
+
+## CRITICAL REQUIREMENT
+**Clerk authentication MUST always open in modal format** to maintain seamless user experience and design consistency.
+
+## ClerkProvider Configuration
+
+### Required Provider Setup
+The ClerkProvider in [src/app/layout.tsx](mdc:src/app/layout.tsx) must be configured for modal-only authentication:
+
+```typescript
+// ✅ REQUIRED: ClerkProvider with modal configuration
+import { ClerkProvider } from '@clerk/nextjs';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ClerkProvider
+      appearance={{
+        baseTheme: undefined, // Use custom styling
+        variables: {
+          // Tactile design system integration
+          colorPrimary: '#D98666',        // terracotta
+          colorBackground: '#F8F5EE',     // parchment
+          colorText: '#2B2A2D',           // charcoal
+          colorTextSecondary: '#2B2A2D',  // charcoal with opacity
+          colorInputBackground: '#F8F5EE', // parchment
+          colorInputText: '#2B2A2D',      // charcoal
+          borderRadius: '2rem 1rem 1rem 2rem', // squircle shape
+          fontFamily: 'Inter, sans-serif', // body font
+          fontSize: '16px',
+        },
+        elements: {
+          // Modal-specific styling
+          modalContent: {
+            backgroundColor: '#F8F5EE',
+            borderRadius: '2rem 1rem 1rem 2rem',
+            boxShadow: '0 20px 25px -5px rgba(43, 42, 45, 0.1), 0 10px 10px -5px rgba(43, 42, 45, 0.04)',
+            border: '1px solid rgba(43, 42, 45, 0.1)',
+          },
+          modalCloseButton: {
+            color: '#2B2A2D',
+          },
+          // Form elements
+          formButtonPrimary: {
+            backgroundColor: '#D98666',
+            color: '#F8F5EE',
+            borderRadius: '2rem 1rem 1rem 2rem',
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: '500',
+            padding: '12px 24px',
+            boxShadow: '0 4px 6px -1px rgba(43, 42, 45, 0.1)',
+            transition: 'all 200ms ease',
+            '&:hover': {
+              backgroundColor: '#C67A5C',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 10px 15px -3px rgba(43, 42, 45, 0.1)',
+            },
+            '&:active': {
+              transform: 'translateY(0.5px)',
+              boxShadow: 'inset 0 2px 4px 0 rgba(43, 42, 45, 0.06)',
+            },
+          },
+          formFieldInput: {
+            backgroundColor: 'rgba(248, 245, 238, 0.5)',
+            border: '2px solid rgba(43, 42, 45, 0.2)',
+            borderRadius: '1.5rem 0.75rem 0.75rem 1.5rem',
+            color: '#2B2A2D',
+            fontFamily: 'Inter, sans-serif',
+            padding: '12px 16px',
+            '&:focus': {
+              borderColor: '#88A89A',
+              boxShadow: 'inset 0 2px 4px 0 rgba(43, 42, 45, 0.06)',
+              outline: 'none',
+            },
+          },
+          // Typography
+          headerTitle: {
+            fontFamily: 'Playfair Display, serif',
+            color: '#2B2A2D',
+            fontSize: '28px',
+            fontWeight: '700',
+          },
+          headerSubtitle: {
+            fontFamily: 'Inter, sans-serif',
+            color: 'rgba(43, 42, 45, 0.8)',
+            fontSize: '16px',
+          },
+          // Links and secondary actions
+          footerActionLink: {
+            color: '#D98666',
+            fontFamily: 'Inter, sans-serif',
+            textDecoration: 'none',
+            '&:hover': {
+              color: '#C67A5C',
+              textDecoration: 'underline',
+            },
+          },
+        },
+      }}
+    >
+      <html lang="en">
+        <body className={`${inter.variable} ${playfairDisplay.variable} font-body bg-parchment bg-grain text-charcoal antialiased`}>
+          <Providers>
+            {children}
+          </Providers>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
+}
+```
+
+## Authentication Component Patterns
+
+### Sign-In Component
+```typescript
+// ✅ REQUIRED: Modal-only sign-in configuration
+import { SignIn } from '@clerk/nextjs';
+
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen bg-parchment bg-grain flex items-center justify-center p-4">
+      <SignIn 
+        appearance={{
+          elements: {
+            rootBox: {
+              width: '100%',
+              maxWidth: '400px',
+            },
+            card: {
+              backgroundColor: '#F8F5EE',
+              borderRadius: '2rem 1rem 1rem 2rem',
+              boxShadow: '0 20px 25px -5px rgba(43, 42, 45, 0.1)',
+              border: '1px solid rgba(43, 42, 45, 0.1)',
+              padding: '32px',
+            },
+          },
+        }}
+        routing="hash" // ✅ REQUIRED: Use hash routing for modal behavior
+        signUpUrl="/sign-up"
+        redirectUrl="/projects"
+        afterSignInUrl="/projects"
+      />
+    </div>
+  );
+}
+```
+
+### Sign-Up Component
+```typescript
+// ✅ REQUIRED: Modal-only sign-up configuration
+import { SignUp } from '@clerk/nextjs';
+
+export default function SignUpPage() {
+  return (
+    <div className="min-h-screen bg-parchment bg-grain flex items-center justify-center p-4">
+      <SignUp 
+        appearance={{
+          elements: {
+            rootBox: {
+              width: '100%',
+              maxWidth: '400px',
+            },
+            card: {
+              backgroundColor: '#F8F5EE',
+              borderRadius: '2rem 1rem 1rem 2rem',
+              boxShadow: '0 20px 25px -5px rgba(43, 42, 45, 0.1)',
+              border: '1px solid rgba(43, 42, 45, 0.1)',
+              padding: '32px',
+            },
+          },
+        }}
+        routing="hash" // ✅ REQUIRED: Use hash routing for modal behavior
+        signInUrl="/sign-in"
+        redirectUrl="/projects"
+        afterSignUpUrl="/projects"
+      />
+    </div>
+  );
+}
+```
+
+## User Button Configuration
+
+### Header User Button
+```typescript
+// ✅ REQUIRED: UserButton with tactile styling
+import { UserButton } from '@clerk/nextjs';
+
+export function Header() {
+  return (
+    <header className="bg-parchment border-b border-charcoal/10 p-4">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <h1 className="font-headline text-charcoal text-2xl font-bold">
+          MagicMailer
+        </h1>
+        
+        <UserButton 
+          appearance={{
+            elements: {
+              avatarBox: {
+                width: '40px',
+                height: '40px',
+                borderRadius: '2rem 1rem 1rem 2rem', // squircle shape
+                border: '2px solid rgba(43, 42, 45, 0.1)',
+              },
+              popoverCard: {
+                backgroundColor: '#F8F5EE',
+                borderRadius: '2rem 1rem 1rem 2rem',
+                boxShadow: '0 10px 15px -3px rgba(43, 42, 45, 0.1)',
+                border: '1px solid rgba(43, 42, 45, 0.1)',
+              },
+              popoverActionButton: {
+                color: '#2B2A2D',
+                fontFamily: 'Inter, sans-serif',
+                '&:hover': {
+                  backgroundColor: 'rgba(217, 134, 102, 0.1)',
+                },
+              },
+            },
+          }}
+          afterSignOutUrl="/"
+        />
+      </div>
+    </header>
+  );
+}
+```
+
+## Modal Behavior Requirements
+
+### Navigation Integration
+```typescript
+// ✅ REQUIRED: Programmatic modal opening
+'use client';
+import { useClerk } from '@clerk/nextjs';
+
+export function AuthButtons() {
+  const { openSignIn, openSignUp } = useClerk();
+
+  return (
+    <div className="space-x-4">
+      <button 
+        className="tactile-button-secondary"
+        onClick={() => openSignIn({
+          routing: 'hash',
+          redirectUrl: '/projects',
+        })}
+      >
+        Sign In
+      </button>
+      
+      <button 
+        className="tactile-button"
+        onClick={() => openSignUp({
+          routing: 'hash',
+          redirectUrl: '/projects',
+        })}
+      >
+        Get Started
+      </button>
+    </div>
+  );
+}
+```
+
+### Redirect Configuration
+```typescript
+// ✅ REQUIRED: Consistent redirect URLs
+const CLERK_REDIRECT_CONFIG = {
+  signInUrl: '/sign-in',
+  signUpUrl: '/sign-up',
+  afterSignInUrl: '/projects',
+  afterSignUpUrl: '/projects',
+  afterSignOutUrl: '/',
+} as const;
+
+// Use these constants throughout the application
+```
+
+## Responsive Modal Design
+
+### Mobile Optimization
+```css
+/* ✅ REQUIRED: Mobile-responsive modal styles */
+@media (max-width: 640px) {
+  .cl-modalContent {
+    margin: 1rem !important;
+    width: calc(100vw - 2rem) !important;
+    max-width: none !important;
+    border-radius: 1.5rem 0.75rem 0.75rem 1.5rem !important;
+  }
+  
+  .cl-card {
+    padding: 1.5rem !important;
+  }
+  
+  .cl-headerTitle {
+    font-size: 1.5rem !important;
+  }
+}
+```
+
+### Desktop Modal Positioning
+```css
+/* ✅ REQUIRED: Centered modal positioning */
+.cl-modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2rem !important;
+}
+
+.cl-modalContent {
+  position: relative !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+}
+```
+
+## Error Handling in Modals
+
+### Authentication Error Display
+```typescript
+// ✅ REQUIRED: Tactile error styling
+const clerkAppearance = {
+  elements: {
+    formFieldErrorText: {
+      color: '#D98666', // Use terracotta for errors (warm, not harsh)
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '14px',
+      marginTop: '4px',
+    },
+    identityPreviewText: {
+      fontFamily: 'Inter, sans-serif',
+      color: 'rgba(43, 42, 45, 0.8)',
+    },
+    formResendCodeLink: {
+      color: '#D98666',
+      fontFamily: 'Inter, sans-serif',
+      '&:hover': {
+        color: '#C67A5C',
+      },
+    },
+  },
+};
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ Full-Page Authentication
+```typescript
+// NEVER use full-page authentication flows
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen">
+      <SignIn routing="path" /> {/* WRONG: Should use hash routing */}
+    </div>
+  );
+}
+```
+
+### ❌ Inconsistent Styling
+```typescript
+// NEVER use default Clerk styling without customization
+<ClerkProvider>
+  {/* Missing appearance configuration */}
+</ClerkProvider>
+```
+
+### ❌ Breaking Tactile Design
+```typescript
+// NEVER use sharp corners or cold colors in Clerk components
+const wrongAppearance = {
+  variables: {
+    colorPrimary: '#0066CC', // Cold blue - WRONG
+    borderRadius: '8px',     // Sharp corners - WRONG
+  },
+};
+```
+
+## Testing Modal Behavior
+
+### Required Tests
+```typescript
+// ✅ REQUIRED: Test modal opening behavior
+describe('Clerk Modal Integration', () => {
+  it('should open sign-in modal when clicking sign-in button', async () => {
+    render(<AuthButtons />);
+    
+    const signInButton = screen.getByText('Sign In');
+    fireEvent.click(signInButton);
+    
+    // Verify modal opens with hash routing
+    expect(window.location.hash).toContain('#/sign-in');
+  });
+  
+  it('should apply tactile styling to modal', async () => {
+    render(<SignInPage />);
+    
+    const modal = await screen.findByRole('dialog');
+    expect(modal).toHaveStyle({
+      backgroundColor: '#F8F5EE',
+      borderRadius: '2rem 1rem 1rem 2rem',
+    });
+  });
+});
+```
+
+## Implementation Checklist
+
+For Clerk integration:
+- [ ] ClerkProvider configured with tactile appearance
+- [ ] All auth components use hash routing
+- [ ] Modal styling matches tactile design system
+- [ ] UserButton styled with squircle shapes
+- [ ] Consistent redirect URLs throughout app
+- [ ] Mobile-responsive modal design
+- [ ] Error states use warm colors
+- [ ] Tests verify modal behavior

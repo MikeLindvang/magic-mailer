@@ -1,0 +1,183 @@
+---
+alwaysApply: true
+---
+# UX Principles for Tactile Digital Design
+
+## Core UX Philosophy
+
+### Human-Centered Digital Experiences
+The tactile design system prioritizes human connection over digital perfection:
+
+- **Warmth over Coldness**: Every interaction should feel welcoming and approachable
+- **Imperfection over Perfection**: Slight asymmetries and organic shapes feel more human
+- **Physicality over Flatness**: Elements should suggest depth, weight, and tactile qualities
+- **Personality over Genericness**: Unique character over standardized solutions
+
+## Interaction Design Principles
+
+### 1. Tactile Feedback
+All interactive elements must provide clear, satisfying feedback:
+
+```tsx
+// ✅ Proper tactile feedback with visual depth changes
+<button className="tactile-button">
+  {/* 
+  Hover: shadow-paper-lg (lifts up)
+  Active: shadow-paper-inner + translate-y-0.5 (presses down)
+  */}
+  Interactive Button
+</button>
+```
+
+**Requirements:**
+- Hover states should "lift" elements (increase shadow)
+- Active states should "press" elements (inset shadow + slight translate)
+- Transitions should be smooth but quick (200ms)
+- Focus states should be clearly visible but not harsh
+
+### 2. Progressive Disclosure
+Information should be revealed naturally and contextually:
+
+```tsx
+// ✅ Layered information architecture
+<section className="bg-parchment bg-grain min-h-screen">
+  <div className="tactile-card paper-texture"> {/* Primary content */}
+    <h1 className="font-headline">Main Message</h1>
+    <p className="font-body text-charcoal/80"> {/* Secondary info */}
+      Supporting details with reduced opacity
+    </p>
+  </div>
+</section>
+```
+
+**Guidelines:**
+- Primary information: Full opacity charcoal text
+- Secondary information: 80% opacity for hierarchy
+- Tertiary information: 60% opacity for supporting details
+- Use spatial relationships and depth to guide attention
+
+### 3. Forgiving Interactions
+Design for human error and provide graceful recovery:
+
+```tsx
+// ✅ Generous touch targets and clear states
+<button className="tactile-button px-6 py-3"> {/* Large touch target */}
+  <span className="font-body font-medium">Clear Action</span>
+</button>
+
+<input 
+  className="tactile-input w-full" 
+  placeholder="Descriptive placeholder text..."
+  aria-label="Descriptive label"
+/>
+```
+
+**Requirements:**
+- Minimum 44px touch targets for mobile
+- Clear, descriptive labels and placeholders
+- Obvious visual states for all interactive elements
+- Generous spacing between interactive elements
+
+## Content Strategy
+
+### 1. Conversational Tone
+All content should feel like a friendly conversation:
+
+- **Use**: "Let's get started" instead of "Initialize process"
+- **Use**: "Tell us about yourself" instead of "Enter user data"
+- **Use**: "Something went wrong" instead of "Error 404"
+
+### 2. Contextual Help
+Guidance should be embedded naturally:
+
+```tsx
+// ✅ Contextual, helpful placeholder text
+<input 
+  className="tactile-input"
+  placeholder="e.g., Sarah Johnson or Sarah J."
+  aria-describedby="name-help"
+/>
+<p id="name-help" className="text-sm text-charcoal/60 mt-1">
+  Use the name you'd like others to see
+</p>
+```
+
+### 3. Emotional Connection
+Design should acknowledge and respond to user emotions:
+
+- **Success states**: Warm, celebratory language and colors
+- **Error states**: Empathetic, helpful language (avoid blame)
+- **Empty states**: Encouraging, action-oriented messaging
+
+## Accessibility Requirements
+
+### 1. Visual Accessibility
+- **Contrast**: Maintain WCAG AA compliance with charcoal text on parchment backgrounds
+- **Focus**: Clear focus indicators that work with the tactile aesthetic
+- **Scale**: Support browser zoom up to 200% without horizontal scrolling
+
+### 2. Motor Accessibility
+- **Touch targets**: Minimum 44px for all interactive elements
+- **Spacing**: Adequate space between interactive elements
+- **Feedback**: Clear visual feedback for all state changes
+
+### 3. Cognitive Accessibility
+- **Consistency**: Predictable interaction patterns throughout
+- **Clarity**: Clear, simple language and visual hierarchy
+- **Progress**: Clear indication of where users are in multi-step processes
+
+## Performance and Perceived Performance
+
+### 1. Loading States
+```tsx
+// ✅ Tactile loading states that match the design system
+<div className="tactile-card paper-texture p-8">
+  <div className="animate-pulse">
+    <div className="h-8 bg-charcoal/10 rounded-squircle-sm mb-4"></div>
+    <div className="h-4 bg-charcoal/10 rounded-squircle-sm mb-2"></div>
+    <div className="h-4 bg-charcoal/10 rounded-squircle-sm w-3/4"></div>
+  </div>
+</div>
+```
+
+### 2. Transition Performance
+- Use `transform` and `opacity` for smooth animations
+- Keep transitions under 200ms for responsiveness
+- Provide reduced motion alternatives
+
+## Mobile-First Considerations
+
+### 1. Touch Interactions
+- Design for thumb-friendly navigation
+- Use the larger squircle shapes for better touch targets
+- Provide adequate spacing for fat-finger interactions
+
+### 2. Responsive Typography
+```tsx
+// ✅ Responsive headline sizing
+<h1 className="text-4xl md:text-6xl font-headline font-bold">
+  Responsive Headline
+</h1>
+```
+
+### 3. Progressive Enhancement
+- Start with core functionality on mobile
+- Enhance with hover states and larger interactions on desktop
+- Ensure all tactile qualities work across devices
+
+## Anti-Patterns to Avoid
+
+### ❌ Cold, Impersonal Interactions
+- Avoid robotic error messages
+- Don't use technical jargon in user-facing content
+- Never sacrifice warmth for efficiency
+
+### ❌ Overwhelming Visual Complexity
+- Don't overuse the paper texture effect
+- Avoid too many competing squircle shapes in one view
+- Maintain visual hierarchy with appropriate use of depth
+
+### ❌ Inconsistent Tactile Language
+- Don't mix tactile elements with flat design patterns
+- Avoid breaking the organic shape language with sharp corners
+- Never use cold colors alongside the warm tactile palette

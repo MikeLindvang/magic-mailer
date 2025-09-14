@@ -1,0 +1,176 @@
+---
+alwaysApply: true
+---
+# Tailwind Configuration Standards
+
+The tactile design system requires specific Tailwind configuration as defined in [tailwind.config.js](mdc:tailwind.config.js).
+
+## Required Font Family Configuration
+
+```javascript
+fontFamily: {
+  'headline': ['Playfair Display', 'serif'],
+  'body': ['Inter', 'sans-serif'], 
+  'sans': ['Inter', 'sans-serif'], // Override default sans
+  'serif': ['Playfair Display', 'serif'], // Override default serif
+}
+```
+
+**Rules:**
+- Always use `Playfair Display` for headline font
+- Always use `Inter` for body font
+- Override Tailwind defaults to ensure consistency
+- Include fallback font families
+
+## Required Color Palette
+
+```javascript
+colors: {
+  // Tactile Digital Color Palette
+  'parchment': '#F8F5EE',
+  'charcoal': '#2B2A2D', 
+  'terracotta': '#D98666',
+  'sage': '#88A89A',
+  
+  // Keep existing shadcn/ui colors for compatibility
+  // ... (existing colors)
+}
+```
+
+**Rules:**
+- Never change the tactile color hex values
+- Maintain shadcn/ui compatibility colors
+- Use semantic color names (not color-number combinations)
+
+## Required Border Radius Configuration
+
+```javascript
+borderRadius: {
+  lg: "var(--radius)",
+  md: "calc(var(--radius) - 2px)", 
+  sm: "calc(var(--radius) - 4px)",
+  // Custom squircle shapes for tactile design
+  'squircle': '2rem 1rem 1rem 2rem',
+  'squircle-sm': '1.5rem 0.75rem 0.75rem 1.5rem',
+  'squircle-lg': '2.5rem 1.25rem 1.25rem 2.5rem', 
+  'squircle-alt': '1rem 2rem 2rem 1rem', // Alternative asymmetric shape
+}
+```
+
+**Rules:**
+- Always use asymmetric border-radius values
+- Provide multiple squircle size variants
+- Maintain existing shadcn/ui radius variables
+- Never use perfect circles or standard rectangles as defaults
+
+## Required Shadow Configuration
+
+```javascript
+boxShadow: {
+  // Custom paper-like shadows for depth
+  'paper': '0 4px 6px -1px rgba(43, 42, 45, 0.1), 0 2px 4px -1px rgba(43, 42, 45, 0.06), 0 1px 3px 0 rgba(43, 42, 45, 0.1)',
+  'paper-lg': '0 10px 15px -3px rgba(43, 42, 45, 0.1), 0 4px 6px -2px rgba(43, 42, 45, 0.05), 0 2px 4px 0 rgba(43, 42, 45, 0.1)',
+  'paper-xl': '0 20px 25px -5px rgba(43, 42, 45, 0.1), 0 10px 10px -5px rgba(43, 42, 45, 0.04), 0 4px 6px 0 rgba(43, 42, 45, 0.1)',
+  'paper-inner': 'inset 0 2px 4px 0 rgba(43, 42, 45, 0.06)',
+}
+```
+
+**Rules:**
+- Use charcoal color (43, 42, 45) for shadow colors
+- Create multi-layered shadows for depth
+- Provide size variants (paper, paper-lg, paper-xl)
+- Include inset shadow for pressed states
+- Never use pure black shadows
+
+## Required Background Image Configuration
+
+```javascript
+backgroundImage: {
+  // Subtle texture for the parchment background
+  'grain': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E\")",
+}
+```
+
+**Rules:**
+- Use inline SVG for grain texture
+- Keep opacity very low (0.03) for subtlety
+- Use fractal noise for organic feel
+- Ensure tileable pattern
+
+## Configuration Structure Requirements
+
+### Plugin Requirements
+```javascript
+plugins: [require("tailwindcss-animate")]
+```
+
+**Rules:**
+- Always include `tailwindcss-animate` for smooth transitions
+- Maintain existing plugin compatibility
+
+### Content Configuration
+```javascript
+content: [
+  "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+  "./src/components/**/*.{js,ts,jsx,tsx,mdx}", 
+  "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+]
+```
+
+**Rules:**
+- Include all source directories
+- Support both JS and TS file extensions
+- Include MDX support for documentation
+
+### Dark Mode Support
+```javascript
+darkMode: ["class"]
+```
+
+**Rules:**
+- Use class-based dark mode strategy
+- Maintain compatibility with theme switching
+
+## Anti-Patterns to Avoid
+
+### ❌ Generic Color Names
+```javascript
+// Don't use generic color names
+colors: {
+  'primary': '#D98666', // Too generic
+  'secondary': '#88A89A', // Too generic
+}
+
+// Use semantic, material-based names
+colors: {
+  'terracotta': '#D98666', // ✅ Evokes natural material
+  'sage': '#88A89A', // ✅ Evokes natural color
+}
+```
+
+### ❌ Perfect Geometric Shapes
+```javascript
+// Don't use perfect geometric border radius
+borderRadius: {
+  'button': '8px', // Too geometric
+  'card': '12px', // Too geometric
+}
+
+// Use organic, asymmetric shapes
+borderRadius: {
+  'squircle': '2rem 1rem 1rem 2rem', // ✅ Organic asymmetry
+}
+```
+
+### ❌ Standard Material Shadows
+```javascript
+// Don't use standard shadow values
+boxShadow: {
+  'md': '0 4px 6px -1px rgb(0 0 0 / 0.1)', // Too standard
+}
+
+// Use custom paper-like shadows
+boxShadow: {
+  'paper': '0 4px 6px -1px rgba(43, 42, 45, 0.1), ...', // ✅ Multi-layered
+}
+```

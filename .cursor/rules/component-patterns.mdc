@@ -1,0 +1,154 @@
+---
+alwaysApply: true
+---
+# Tactile Component Patterns
+
+## Required Component Structure
+
+### Typography Components
+All text elements must follow the tactile typography hierarchy:
+
+```tsx
+// ✅ Headlines - Always use font-headline
+<h1 className="font-headline text-charcoal text-4xl font-bold">
+  Main Headline
+</h1>
+
+// ✅ Body text - Always use font-body
+<p className="font-body text-charcoal/80 leading-relaxed">
+  Body content with proper opacity for hierarchy
+</p>
+
+// ❌ Never mix fonts inappropriately
+<h1 className="font-body">Wrong Font</h1>
+<p className="font-headline">Wrong Font</p>
+```
+
+### Interactive Elements
+All interactive elements must use tactile styling:
+
+```tsx
+// ✅ Primary buttons
+<button className="tactile-button">
+  Primary Action
+</button>
+
+// ✅ Secondary buttons
+<button className="tactile-button-secondary">
+  Secondary Action
+</button>
+
+// ✅ Form inputs
+<input 
+  className="tactile-input w-full" 
+  placeholder="Descriptive placeholder..."
+/>
+
+// ❌ Never use generic Tailwind button styles
+<button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+  Generic Button
+</button>
+```
+
+### Container Components
+All container elements should use tactile card styling:
+
+```tsx
+// ✅ Card containers with tactile qualities
+<div className="tactile-card paper-texture p-8">
+  <h2 className="font-headline text-charcoal mb-4">Card Title</h2>
+  <div className="space-y-4">
+    {/* Card content */}
+  </div>
+</div>
+
+// ✅ Section containers with background texture
+<section className="bg-parchment bg-grain min-h-screen p-8">
+  <div className="max-w-4xl mx-auto">
+    {/* Section content */}
+  </div>
+</section>
+
+// ❌ Avoid generic white backgrounds and sharp corners
+<div className="bg-white rounded-lg shadow-md p-6">
+  <h2>Generic Card</h2>
+</div>
+```
+
+## Component Composition Rules
+
+### Color Usage
+- **Backgrounds**: Always start with `bg-parchment` for main areas
+- **Text**: Use `text-charcoal` for primary text, `text-charcoal/80` for secondary
+- **Accents**: `bg-terracotta` for primary actions, `bg-sage` for secondary actions
+- **Never**: Use pure white (`bg-white`) or pure black (`text-black`)
+
+### Spacing and Layout
+- **Padding**: Use generous padding (p-8, p-12) for breathing room
+- **Margins**: Use consistent spacing with Tailwind's spacing scale
+- **Max Width**: Constrain content with `max-w-4xl` or similar for readability
+
+### State Management
+Interactive elements must provide tactile feedback:
+
+```tsx
+// ✅ Proper hover and active states are built into tactile classes
+<button className="tactile-button">
+  {/* Hover: shadow-paper-lg, Active: shadow-paper-inner + translate */}
+  Button with Tactile Feedback
+</button>
+
+// ✅ Form focus states
+<input 
+  className="tactile-input focus:border-sage focus:shadow-paper-inner" 
+  onFocus={() => {/* Handle focus */}}
+/>
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ Generic Material Design
+```tsx
+// Don't use sharp, geometric Material Design patterns
+<Paper elevation={2}>
+  <Button variant="contained" color="primary">
+    Material Button
+  </Button>
+</Paper>
+```
+
+### ❌ Pure Minimalism
+```tsx
+// Avoid overly minimal, cold designs
+<div className="bg-white border border-gray-200 p-4">
+  <h2 className="text-gray-900 text-lg">Minimal Card</h2>
+</div>
+```
+
+### ❌ Inconsistent Typography
+```tsx
+// Never mix font families randomly
+<div>
+  <h1 className="font-sans">Sans Headline</h1>
+  <p className="font-serif">Serif Body</p>
+</div>
+```
+
+## Required Imports
+Always import fonts properly in layout files:
+
+```tsx
+import { Inter, Playfair_Display } from "next/font/google";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair", 
+  subsets: ["latin"],
+  display: "swap",
+});
+```
