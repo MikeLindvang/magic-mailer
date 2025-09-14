@@ -26,8 +26,8 @@ const BuildStyleCardSchema = z.object({
   emails: z.array(EmailSchema).min(1, 'At least one email is required').max(50, 'Maximum 50 emails allowed'),
 });
 
-type BuildStyleCardRequest = z.infer<typeof BuildStyleCardSchema>;
-type BuildStyleCardResponse = ApiResponse<{ style_profile_id: string }>;
+// type BuildStyleCardRequest = z.infer<typeof BuildStyleCardSchema>;
+// type BuildStyleCardResponse = ApiResponse<{ style_profile_id: string }>;
 
 // Initialize OpenAI client
 const openai = new OpenAI({

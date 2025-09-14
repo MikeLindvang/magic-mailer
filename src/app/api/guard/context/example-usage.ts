@@ -258,10 +258,10 @@ export async function validateDraftContext() {
       console.log(`📊 Summary: ${result.data.summary.supported_claims}/${result.data.summary.total_claims} claims supported (${result.data.summary.support_percentage}%)`);
       
       // Show unsupported claims
-      const unsupported = result.data.claims.filter((claim: any) => claim.status === 'unsupported');
+      const unsupported = result.data.claims.filter((claim: { status: string }) => claim.status === 'unsupported');
       if (unsupported.length > 0) {
         console.log('\n⚠️  Unsupported claims:');
-        unsupported.forEach((claim: any) => {
+        unsupported.forEach((claim: { claim: string; evidence: string }) => {
           console.log(`- "${claim.claim}"`);
           console.log(`  Reason: ${claim.evidence}`);
         });

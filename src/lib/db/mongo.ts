@@ -62,7 +62,7 @@ export async function getDb(): Promise<Db> {
  * const user = await users.findOne({ email: 'user@example.com' });
  * ```
  */
-export async function getColl<T = any>(name: string): Promise<Collection<T>> {
+export async function getColl<T = Record<string, unknown>>(name: string): Promise<Collection<T>> {
   const db = await getDb();
   return db.collection<T>(name);
 }

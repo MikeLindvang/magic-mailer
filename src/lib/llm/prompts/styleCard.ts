@@ -164,7 +164,7 @@ Return ONLY a valid JSON object matching the StyleCard interface. No additional 
 The JSON should be complete, accurate, and directly usable for generating new content in the same style.`;
 }
 
-export function validateStyleCard(data: any): StyleCard {
+export function validateStyleCard(data: unknown): StyleCard {
   // Basic validation - in a real implementation, you'd use Zod schema
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid style card data');

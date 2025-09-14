@@ -107,7 +107,7 @@ export async function ensureIndexes(): Promise<void> {
  * @param collectionName - Name of the collection
  * @returns Promise<any[]> - Array of index information
  */
-export async function listIndexes(collectionName: string): Promise<any[]> {
+export async function listIndexes(collectionName: string): Promise<Record<string, unknown>[]> {
   try {
     const db = await getDb();
     const collection = db.collection(collectionName);

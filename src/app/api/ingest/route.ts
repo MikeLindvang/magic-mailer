@@ -31,7 +31,7 @@ const IngestRequestSchema = z.object({
   title: z.string().optional(),
 });
 
-type IngestRequest = z.infer<typeof IngestRequestSchema>;
+// type IngestRequest = z.infer<typeof IngestRequestSchema>;
 
 /**
  * Response type for successful ingestion

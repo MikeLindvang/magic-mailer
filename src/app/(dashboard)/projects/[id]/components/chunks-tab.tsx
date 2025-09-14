@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -84,7 +84,7 @@ export function ChunksTab({
   })
 
   // Load chunks from API
-  const loadChunks = async () => {
+  const loadChunks = useCallback(async () => {
     try {
       setIsLoadingChunks(true)
       const response = await fetch(`/api/projects/${projectId}/chunks`)
@@ -111,14 +111,14 @@ export function ChunksTab({
     } finally {
       setIsLoadingChunks(false)
     }
-  }
+  }, [projectId])
 
   // Load chunks on component mount
   useEffect(() => {
     if (projectId) {
       loadChunks()
     }
-  }, [projectId])
+  }, [projectId, loadChunks])
 
   // Create new custom chunk
   const handleCreateChunk = async () => {

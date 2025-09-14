@@ -132,7 +132,7 @@ export async function GET(
               asset: { _id: matchedAsset._id, title: matchedAsset.title }
             };
           }
-        } catch (error) {
+        } catch {
           // Ignore ObjectId conversion errors
         }
 

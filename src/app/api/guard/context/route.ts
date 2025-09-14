@@ -159,7 +159,7 @@ async function validateClaimsAgainstContext(
     }
 
     return {
-      claims: validation.claims.map((claim: any) => ({
+      claims: validation.claims.map((claim: Record<string, unknown>) => ({
         claim: claim.claim || 'Unknown claim',
         status: claim.status === 'supported' ? 'supported' : 'unsupported',
         supporting_chunks: Array.isArray(claim.supporting_chunks) ? claim.supporting_chunks : [],

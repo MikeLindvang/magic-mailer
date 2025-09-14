@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -44,7 +44,7 @@ export default function ProjectDetailPage() {
   const [selectedChunkIds, setSelectedChunkIds] = useState<string[]>([])
 
   // Load project from API
-  const loadProject = async () => {
+  const loadProject = useCallback(async () => {
     try {
       setIsLoadingProject(true)
       const response = await fetch(`/api/projects/${projectId}`)
@@ -72,10 +72,10 @@ export default function ProjectDetailPage() {
     } finally {
       setIsLoadingProject(false)
     }
-  }
+  }, [projectId])
 
   // Load assets for the project
-  const loadAssets = async () => {
+  const loadAssets = useCallback(async () => {
     try {
       setIsLoadingAssets(true)
       const response = await fetch(`/api/projects/${projectId}/assets`)
@@ -101,10 +101,10 @@ export default function ProjectDetailPage() {
     } finally {
       setIsLoadingAssets(false)
     }
-  }
+  }, [projectId])
 
   // Load drafts for the project
-  const loadDrafts = async () => {
+  const loadDrafts = useCallback(async () => {
     try {
       setIsLoadingDrafts(true)
       const response = await fetch(`/api/projects/${projectId}/drafts`)
@@ -130,7 +130,7 @@ export default function ProjectDetailPage() {
     } finally {
       setIsLoadingDrafts(false)
     }
-  }
+  }, [projectId])
 
   // Load project, assets, and drafts on component mount
   useEffect(() => {
@@ -139,7 +139,7 @@ export default function ProjectDetailPage() {
       loadAssets()
       loadDrafts()
     }
-  }, [projectId])
+  }, [projectId, loadProject, loadAssets, loadDrafts])
 
   // Handle draft generation
   const handleDraftGenerated = (draft: GeneratedDraft) => {

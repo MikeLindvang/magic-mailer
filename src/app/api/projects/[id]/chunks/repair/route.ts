@@ -65,7 +65,7 @@ export async function POST(
 
     let orphanedChunks = 0;
     let convertedChunks = 0;
-    let deletedChunks = 0;
+    const deletedChunks = 0;
 
     // Process each chunk
     for (const chunk of chunks) {

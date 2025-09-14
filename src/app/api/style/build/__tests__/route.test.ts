@@ -143,7 +143,7 @@ describe('Style Card Build API Endpoint', () => {
         { emails: [{ subject: "Valid", body: "Valid", rpc: -10 }] } // Negative RPC
       ];
 
-      invalidRequests.forEach((request, index) => {
+      invalidRequests.forEach((request) => {
         // These would fail validation in the actual API
         expect(request.emails).toBeDefined();
         // Additional validation logic would be tested here

@@ -4,7 +4,7 @@ import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
 import { generateEmailPrompt, PAS_EMAIL_CONFIG } from '@/lib/llm/prompts/generate';
-import { zProject, type Project } from '@/lib/schemas/project';
+import { type Project } from '@/lib/schemas/project';
 import { zCreateDraft, type CreateDraft } from '@/lib/schemas/draft';
 import { ObjectId } from 'mongodb';
 
@@ -23,7 +23,7 @@ const zGenerateRequest = z.object({
   selectedChunkIds: z.array(z.string()).optional(), // Optional array of selected chunk IDs
 });
 
-type GenerateRequest = z.infer<typeof zGenerateRequest>;
+// type GenerateRequest = z.infer<typeof zGenerateRequest>;
 
 /**
  * Generated email response schema
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Use custom query or default to project name
     const searchQuery = query || project.name;
 
-    let retrievalResult: { chunks: any[], contextPack: string };
+    let retrievalResult: { chunks: Array<{ chunkId: string; score: number; md_text: string; hpath: string[]; source: string }>, contextPack: string };
 
     if (selectedChunkIds && selectedChunkIds.length > 0) {
       // Use selected chunks instead of hybrid search

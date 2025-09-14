@@ -1,0 +1,93 @@
+---
+alwaysApply: true
+---
+
+# Documentation File Management
+
+## CRITICAL REQUIREMENT
+**All generated .md files must be added to .gitignore** to prevent documentation clutter in the repository.
+
+## Required .gitignore Entries
+
+The following patterns MUST be added to [.gitignore](mdc:.gitignore):
+
+```gitignore
+# Generated documentation files
+*.md
+!README.md
+!CLERK_SETUP.md
+!docs/**/*.md
+
+# Cursor-generated files
+cursor-*.md
+app-description*.md
+project-overview*.md
+```
+
+## Documentation Management Rules
+
+### ✅ ALLOWED Documentation Files
+- `README.md` - Main project documentation
+- `CLERK_SETUP.md` - Setup instructions
+- Files in `docs/` directory - Organized documentation
+- Files explicitly committed by developers
+
+### ❌ FORBIDDEN in Repository
+- Auto-generated .md files from Cursor
+- Temporary documentation files
+- AI-generated app descriptions
+- Project overview files created during development
+
+## Implementation Requirements
+
+### Immediate Actions Required
+1. Add the gitignore patterns above to `.gitignore`
+2. Remove any existing auto-generated .md files from tracking
+3. Commit the updated `.gitignore` file
+
+### Ongoing Maintenance
+- Review any new .md files before committing
+- Ensure generated documentation stays in `docs/` directory
+- Use meaningful names for permanent documentation
+
+## File Organization Standards
+
+### Permanent Documentation Structure
+```
+docs/
+  ├── setup/           # Setup and installation guides
+  ├── api/             # API documentation  
+  ├── features/        # Feature documentation
+  └── development/     # Development guides
+```
+
+### Temporary Files (Auto-Ignored)
+- Any .md files in root directory (except exceptions)
+- Files matching cursor-*.md pattern
+- Files matching app-description*.md pattern
+
+## Anti-Patterns to Avoid
+
+### ❌ Repository Pollution
+```
+# Don't commit these types of files
+app-description-2024-12-14.md
+cursor-generated-overview.md
+project-summary.md
+feature-list.md
+```
+
+### ❌ Inconsistent Documentation
+- Don't mix auto-generated and manual documentation
+- Don't commit temporary documentation files
+- Don't bypass the gitignore for convenience
+
+## Enforcement Checklist
+
+For every commit:
+- [ ] Check no auto-generated .md files are staged
+- [ ] Verify .gitignore patterns are working
+- [ ] Ensure permanent docs are in proper directories
+- [ ] Review any new documentation for appropriateness
+
+This rule ensures clean repository management while preserving important project documentation.

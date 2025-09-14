@@ -42,3 +42,14 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Generated documentation files
+*.md
+!README.md
+!CLERK_SETUP.md
+!docs/**/*.md
+
+# Cursor-generated files
+cursor-*.md
+app-description*.md
+project-overview*.md

@@ -142,7 +142,7 @@ function createChunksFromHeading(
   const headingPath = buildHeadingPath(heading);
   
   // Reconstruct full markdown for this section
-  const lines = markdown.split('\n');
+  markdown.split('\n');
   let sectionMarkdown = '';
   
   // Add heading line if it's not the root

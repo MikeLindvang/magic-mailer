@@ -1,6 +1,6 @@
 import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
-import { type Chunk, zCreateChunk } from '@/lib/schemas/chunk';
+import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';

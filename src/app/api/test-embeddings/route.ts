@@ -12,7 +12,7 @@ const TestEmbeddingRequestSchema = z.object({
   projectId: z.string().min(1).optional(), // Optional project ID to check stats
 });
 
-type TestEmbeddingRequest = z.infer<typeof TestEmbeddingRequestSchema>;
+// type TestEmbeddingRequest = z.infer<typeof TestEmbeddingRequestSchema>;
 
 /**
  * Response type for embedding test

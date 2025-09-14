@@ -243,10 +243,7 @@ export async function extractPdfMetadata(buf: Buffer): Promise<{
       throw new Error(`Expected Buffer but received ${typeof buf}`);
     }
     
-    // Reuse the same loading logic as pdfToMarkdown
-    const result = await pdfToMarkdown(buf);
-    
-    // For metadata, we need to call pdf-parse again to get the info object
+    // For metadata, we need to call pdf-parse to get the info object
     const { createRequire } = await import('module');
     const require = createRequire(import.meta.url);
     const pdfParse = require('pdf-parse');

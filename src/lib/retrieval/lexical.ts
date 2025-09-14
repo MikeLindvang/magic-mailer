@@ -141,7 +141,7 @@ export async function lexicalSearch(
 
     // Calculate heuristic scores and format results
     const scoredResults: LexicalSearchResult[] = searchResults.map(chunk => {
-      const textScore = (chunk as any).score || 1; // MongoDB text search score
+      const textScore = (chunk as Record<string, unknown> & { score?: number }).score || 1; // MongoDB text search score
       const heuristicScore = calculateHeuristicScore(
         textScore,
         chunk.md_text.length,

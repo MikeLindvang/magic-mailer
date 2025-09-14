@@ -16,7 +16,7 @@ describe('Vector Search', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetColl.mockResolvedValue(mockChunks as any);
+    mockGetColl.mockResolvedValue(mockChunks as never);
   });
 
   describe('vectorSearch', () => {

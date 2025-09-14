@@ -13,7 +13,7 @@ const RetrievalRequestSchema = z.object({
   k: z.number().int().positive().optional().default(5),
 });
 
-type RetrievalRequest = z.infer<typeof RetrievalRequestSchema>;
+// type RetrievalRequest = z.infer<typeof RetrievalRequestSchema>;
 
 /**
  * POST /api/retriever

@@ -94,8 +94,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 }
 
 async function analyzeStyleMismatches(
-  styleCard: any,
-  draft: any
+  styleCard: Record<string, unknown>,
+  draft: Record<string, unknown>
 ): Promise<{
   mismatches: StyleMismatch[];
   overall_score: number;
@@ -149,7 +149,7 @@ async function analyzeStyleMismatches(
     }
 
     return {
-      mismatches: analysis.mismatches.map((mismatch: any) => ({
+      mismatches: analysis.mismatches.map((mismatch: Record<string, unknown>) => ({
         area: mismatch.area || 'Unknown',
         issue: mismatch.issue || 'No issue specified',
         fix: mismatch.fix || 'No fix suggested'

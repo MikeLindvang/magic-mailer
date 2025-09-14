@@ -107,7 +107,7 @@ export function ContentIngestionForm({ projectId, onAssetCreated }: ContentInges
       const result = await response.json()
       
       if (result.ok) {
-        const { assetId, chunkCount } = result.data as IngestResponse
+        const { chunkCount } = result.data as IngestResponse
         toast.success(`Content ingested successfully! Created ${chunkCount} chunks.`)
         
         // Clear form

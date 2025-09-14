@@ -11,7 +11,7 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32; // 256 bits
 const IV_LENGTH = 16; // 128 bits
-const TAG_LENGTH = 16; // 128 bits
+// const TAG_LENGTH = 16; // 128 bits - Currently unused but may be needed for future validation
 
 /**
  * Get or generate encryption key from environment

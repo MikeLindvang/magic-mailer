@@ -9,7 +9,7 @@ jest.mock('@clerk/nextjs/server', () => ({
 // Mock OpenAI API
 global.fetch = jest.fn();
 
-const mockAuth = require('@clerk/nextjs/server').auth;
+const mockAuth = jest.requireMock('@clerk/nextjs/server').auth;
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe('/api/guard/context', () => {
@@ -18,7 +18,7 @@ describe('/api/guard/context', () => {
     mockAuth.mockResolvedValue({ userId: 'test-user-id' });
   });
 
-  const createRequest = (body: any) => {
+  const createRequest = (body: Record<string, unknown>) => {
     return new NextRequest('http://localhost:3000/api/guard/context', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +26,7 @@ describe('/api/guard/context', () => {
     });
   };
 
-  const mockOpenAIResponse = (content: any) => {
+  const mockOpenAIResponse = (content: Record<string, unknown>) => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
