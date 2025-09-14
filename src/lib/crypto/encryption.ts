@@ -8,7 +8,7 @@ import crypto from 'crypto';
  * key management service.
  */
 
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc';
 const KEY_LENGTH = 32; // 256 bits
 const IV_LENGTH = 16; // 128 bits
 // const TAG_LENGTH = 16; // 128 bits - Currently unused but may be needed for future validation
@@ -50,16 +50,13 @@ export function encrypt(plaintext: string): string {
     const key = getEncryptionKey();
     const iv = crypto.randomBytes(IV_LENGTH);
     
-    const cipher = crypto.createCipherGCM(ALGORITHM, key, iv);
-    cipher.setAAD(Buffer.from('magic-mailer')); // Additional authenticated data
+    const cipher = crypto.createCipher(ALGORITHM, key);
     
     let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
     ciphertext += cipher.final('hex');
     
-    const tag = cipher.getAuthTag();
-    
-    // Combine iv, tag, and ciphertext
-    return `${iv.toString('hex')}:${tag.toString('hex')}:${ciphertext}`;
+    // Combine iv and ciphertext
+    return `${iv.toString('hex')}:${ciphertext}`;
   } catch (error) {
     throw new Error(`Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -76,17 +73,14 @@ export function decrypt(encryptedData: string): string {
     const key = getEncryptionKey();
     const parts = encryptedData.split(':');
     
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       throw new Error('Invalid encrypted data format');
     }
     
     const iv = Buffer.from(parts[0], 'hex');
-    const tag = Buffer.from(parts[1], 'hex');
-    const ciphertext = parts[2];
+    const ciphertext = parts[1];
     
-    const decipher = crypto.createDecipherGCM(ALGORITHM, key, iv);
-    decipher.setAAD(Buffer.from('magic-mailer'));
-    decipher.setAuthTag(tag);
+    const decipher = crypto.createDecipher(ALGORITHM, key);
     
     let plaintext = decipher.update(ciphertext, 'hex', 'utf8');
     plaintext += decipher.final('utf8');

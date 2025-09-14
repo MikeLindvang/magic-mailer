@@ -1,7 +1,8 @@
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
 import { type UserConnection, type CreateUserConnection } from '@/lib/schemas/userConnection';
 import { encrypt, maskApiKey } from '@/lib/crypto/encryption';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { z } from 'zod';
 
 /**
@@ -47,7 +48,7 @@ export async function POST(request: Request): Promise<Response> {
     const { masked, last4 } = maskApiKey(apiKey);
 
     // Get user connections collection
-    const userConnectionsColl = await getColl<UserConnection>('user_connections');
+    const userConnectionsColl = await getColl('user_connections');
     
     // Check if user already has a GetResponse connection
     const existingConnection = await userConnectionsColl.findOne({
@@ -85,30 +86,21 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Return success response with masked data
-    return Response.json({
-      ok: true,
-      data: { masked, last4 },
-    } as ApiResponse<SaveApiKeyResponse>);
+    return successResponse({ masked, last4 });
 
   } catch (error) {
     console.error('Error saving GetResponse API key:', error);
     
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { 
-          ok: false, 
-          error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
-        } as ApiResponse<never>,
-        { status: 400 }
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
       );
     }
     
-    return Response.json(
-      { 
-        ok: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      } as ApiResponse<never>,
-      { status: 500 }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     );
   }
 }

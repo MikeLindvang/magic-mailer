@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+import { MongoClient, Db, Collection, Document } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is not defined');
@@ -62,7 +62,7 @@ export async function getDb(): Promise<Db> {
  * const user = await users.findOne({ email: 'user@example.com' });
  * ```
  */
-export async function getColl<T = Record<string, unknown>>(name: string): Promise<Collection<T>> {
+export async function getColl<T extends Document = Document>(name: string): Promise<Collection<T>> {
   const db = await getDb();
   return db.collection<T>(name);
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import OpenAI from 'openai';
 
-import { requireUser, type ApiResponse } from '@/lib/auth/requireUser';
+import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
 import { type StyleProfile } from '@/lib/schemas/styleProfile';
 import { 
