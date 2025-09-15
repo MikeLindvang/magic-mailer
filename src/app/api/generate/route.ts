@@ -4,7 +4,7 @@ import { requireUser } from '@/lib/auth/requireUser';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
-import { generateEmailPrompt, PAS_EMAIL_CONFIG } from '@/lib/llm/prompts/generate';
+import { generateEmailPrompt, getEmailConfig, getAvailableTones, getAvailableStyles } from '@/lib/llm/prompts/generate';
 import { zCreateDraft, type CreateDraft } from '@/lib/schemas/draft';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { ObjectId } from 'mongodb';
@@ -17,11 +17,13 @@ const zGenerateRequest = z.object({
   angle: z.literal('PAS'), // Currently only supporting PAS
   audience: z.string().optional(),
   length: z.enum(['short', 'medium', 'long']).default('medium'),
+  tone: z.enum(getAvailableTones().map(t => t.key) as [string, ...string[]]).optional(),
+  style: z.enum(getAvailableStyles().map(s => s.key) as [string, ...string[]]).optional(),
+  selectedChunkIds: z.array(z.string()).optional(),
   constraints: z.string().optional(),
   mustInclude: z.string().optional(),
   linkOverrides: z.record(z.string()).optional(),
   query: z.string().optional(), // Optional custom query, defaults to project name
-  selectedChunkIds: z.array(z.string()).optional(), // Optional array of selected chunk IDs
 });
 
 // type GenerateRequest = z.infer<typeof zGenerateRequest>;
@@ -74,15 +76,15 @@ async function generateEmailContent(prompt: string): Promise<GeneratedEmail> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: PAS_EMAIL_CONFIG.model,
+      model: getEmailConfig().model, // Use the base config model
       messages: [
         {
           role: 'system',
           content: prompt
         }
       ],
-      max_tokens: PAS_EMAIL_CONFIG.maxTokens,
-      temperature: PAS_EMAIL_CONFIG.temperature,
+      max_tokens: getEmailConfig().maxTokens, // Use the base config maxTokens
+      temperature: getEmailConfig().temperature, // Use the base config temperature
       response_format: { type: 'json_object' }
     }),
   });
@@ -130,11 +132,13 @@ export async function POST(request: NextRequest): Promise<Response> {
       angle,
       audience,
       length,
+      tone,
+      style,
+      selectedChunkIds,
       constraints,
       mustInclude,
       linkOverrides,
       query,
-      selectedChunkIds
     } = validatedRequest;
 
     // Get database collections
@@ -274,14 +278,16 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Generate email prompt
     const prompt = generateEmailPrompt({
-      angle,
+      angle: angle,
       projectName: project.name,
-      audience,
-      length,
-      constraints,
-      mustInclude,
+      audience: audience,
+      length: length,
+      tone: tone,
+      style: style,
+      constraints: constraints,
+      mustInclude: mustInclude,
       contextPack: retrievalResult.contextPack,
-      defaultLink
+      defaultLink: defaultLink
     });
 
     // Generate email content using LLM

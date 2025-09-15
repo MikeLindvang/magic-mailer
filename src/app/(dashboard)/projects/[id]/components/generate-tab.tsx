@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Wand2, Loader2, Mail, Send } from "lucide-react"
 import { toast } from "sonner"
 import { type GeneratedDraft } from "../types"
+import { getAvailableTones, getAvailableStyles } from '@/lib/llm/prompts/generate';
 
 interface GenerateTabProps {
   projectId: string;
@@ -26,6 +27,10 @@ export function GenerateTab({
 }: GenerateTabProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedDraft, setGeneratedDraft] = useState<GeneratedDraft | null>(null)
+
+  // Add state for tone and style
+  const [selectedTone, setSelectedTone] = useState<string>('conversational');
+  const [selectedStyle, setSelectedStyle] = useState<string>('direct');
 
   // Generate PAS draft
   const handleGenerateDraft = async () => {
@@ -49,6 +54,8 @@ export function GenerateTab({
           projectId,
           angle: 'PAS',
           length: 'medium',
+          tone: selectedTone,
+          style: selectedStyle,
           selectedChunkIds: selectedChunkIds.length > 0 ? selectedChunkIds : undefined,
         }),
       })
@@ -112,6 +119,62 @@ export function GenerateTab({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Existing chunk selection UI */}
+        
+        {/* New Tone and Style Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-body font-medium text-charcoal">
+              Email Tone
+            </label>
+            <select 
+              value={selectedTone}
+              onChange={(e) => setSelectedTone(e.target.value)}
+              className="tactile-input w-full"
+            >
+              {getAvailableTones().map(tone => (
+                <option key={tone.key} value={tone.key}>
+                  {tone.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-charcoal/60 font-body">
+              {getAvailableTones().find(t => t.key === selectedTone)?.description}
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-body font-medium text-charcoal">
+              Email Style
+            </label>
+            <select 
+              value={selectedStyle}
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              className="tactile-input w-full"
+            >
+              {getAvailableStyles().map(style => (
+                <option key={style.key} value={style.key}>
+                  {style.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-charcoal/60 font-body">
+              {getAvailableStyles().find(s => s.key === selectedStyle)?.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Show combination preview */}
+        <div className="bg-parchment/50 rounded-squircle-sm p-4">
+          <h4 className="font-headline text-sm font-semibold text-charcoal mb-2">
+            Email Preview: {getAvailableTones().find(t => t.key === selectedTone)?.name} + {getAvailableStyles().find(s => s.key === selectedStyle)?.name}
+          </h4>
+          <p className="text-sm text-charcoal/80 font-body">
+            Your email will use a <strong>{selectedTone}</strong> tone ({getAvailableTones().find(t => t.key === selectedTone)?.description}) with a <strong>{selectedStyle}</strong> approach ({getAvailableStyles().find(s => s.key === selectedStyle)?.description}).
+          </p>
+        </div>
+
+        {/* Rest of existing UI */}
         <div className="flex flex-col items-center text-center py-4">
           <Wand2 className="h-12 w-12 text-charcoal/40 mb-4" />
           <h3 className="text-lg font-headline font-semibold mb-2 text-charcoal">
