@@ -1,0 +1,229 @@
+---
+alwaysApply: true
+description: "Enforces consistent MongoDB ObjectId handling and database query patterns"
+---
+
+# MongoDB ObjectId Consistency Standards
+
+## CRITICAL REQUIREMENT
+**All MongoDB queries MUST use consistent ObjectId handling** to prevent "not found" errors due to type mismatches.
+
+## Database Storage vs Query Patterns
+
+### How IDs are Stored
+MongoDB automatically converts string IDs that look like ObjectIds into actual ObjectId objects when inserting documents:
+
+```typescript
+// Project creation in [src/app/api/projects/route.ts](mdc:src/app/api/projects/route.ts)
+const projectId = new ObjectId().toString(); // Creates string
+const newProject: Project = {
+  _id: projectId, // Stored as string in object
+  // ... other fields
+};
+await projectsColl.insertOne(newProject); // MongoDB converts to ObjectId!
+```
+
+**Result**: The `_id` field is stored as an **ObjectId object** in MongoDB, not a string.
+
+### How to Query Correctly
+ALL API routes that query by `_id` MUST convert string parameters to ObjectId:
+
+```typescript
+// ✅ CORRECT - Convert string to ObjectId for queries
+const project = await projectsColl.findOne({
+  _id: new ObjectId(projectId), // Convert string to ObjectId
+  userId // Ensure user owns the resource
+});
+
+// ❌ WRONG - String will not match ObjectId in database
+const project = await projectsColl.findOne({
+  _id: projectId, // String !== ObjectId - query will fail
+  userId
+});
+```
+
+## Required Patterns for All API Routes
+
+### 1. Project Ownership Verification Pattern
+ALL routes accessing projects MUST use this exact pattern:
+
+```typescript
+import { ObjectId } from 'mongodb';
+import { requireUser } from '@/lib/auth/requireUser';
+import { getColl } from '@/lib/db/mongo';
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Authenticate user
+  const authResult = await requireUser();
+  if (!authResult.ok) {
+    return authResult.response;
+  }
+  const { userId } = authResult;
+
+  try {
+    const resolvedParams = await params;
+    const projectId = resolvedParams.id;
+
+    // Validate ObjectId format
+    if (!ObjectId.isValid(projectId)) {
+      return errorResponse('Invalid project ID format', 400);
+    }
+
+    // Verify project ownership - ALWAYS use new ObjectId()
+    const projectsColl = await getColl('projects');
+    const project = await projectsColl.findOne({
+      _id: new ObjectId(projectId), // ✅ REQUIRED: Convert to ObjectId
+      userId // ✅ REQUIRED: Verify ownership
+    });
+
+    if (!project) {
+      return errorResponse('Project not found or access denied', 404);
+    }
+
+    // Continue with route logic...
+  } catch (error) {
+    // Error handling...
+  }
+}
+```
+
+### 2. Asset/Draft/Chunk Queries Pattern
+When querying related resources, use string projectId for foreign key relationships:
+
+```typescript
+// ✅ CORRECT - Use string projectId for foreign key relationships
+const assets = await assetsColl.find({ 
+  projectId // Use string for foreign key relationships
+}).toArray();
+
+const chunks = await chunksColl.find({
+  projectId, // Use string for foreign key relationships
+  assetId: asset._id // Use string for asset relationships
+}).toArray();
+```
+
+## Validation Requirements
+
+### 1. ObjectId Format Validation
+ALWAYS validate ObjectId format before querying:
+
+```typescript
+// ✅ REQUIRED for all routes with [id] parameter
+if (!ObjectId.isValid(projectId)) {
+  return errorResponse('Invalid project ID format', 400);
+}
+```
+
+### 2. User Authorization
+NEVER skip user authorization checks:
+
+```typescript
+// ✅ REQUIRED - Always verify user owns the resource
+const project = await projectsColl.findOne({
+  _id: new ObjectId(projectId),
+  userId // This prevents users from accessing others' resources
+});
+```
+
+## Common Anti-Patterns to Avoid
+
+### ❌ FORBIDDEN Patterns
+```typescript
+// NEVER query _id with string when it's stored as ObjectId
+const project = await projectsColl.findOne({ _id: projectId });
+
+// NEVER skip user authorization
+const project = await projectsColl.findOne({ _id: new ObjectId(projectId) });
+
+// NEVER use ObjectId for foreign key relationships
+const assets = await assetsColl.find({ projectId: new ObjectId(projectId) });
+```
+
+## File-Specific Requirements
+
+### API Routes with Project ID Parameter
+These route patterns MUST follow the ObjectId conversion pattern:
+- `/api/projects/[id]/route.ts`
+- `/api/projects/[id]/assets/route.ts`
+- `/api/projects/[id]/drafts/route.ts`
+- `/api/projects/[id]/*/route.ts` (any nested route)
+
+### Routes Accessing Projects by ID
+These routes MUST convert projectId to ObjectId for project queries:
+- `/api/generate/route.ts`
+- `/api/ingest/route.ts`
+- Any route that verifies project ownership
+
+## Error Handling Standards
+
+### Consistent Error Messages
+```typescript
+// ✅ REQUIRED error responses
+if (!ObjectId.isValid(projectId)) {
+  return errorResponse('Invalid project ID format', 400);
+}
+
+if (!project) {
+  return errorResponse('Project not found or access denied', 404);
+}
+```
+
+### Security Considerations
+- Always return 404 (not 403) for unauthorized access to prevent resource enumeration
+- Never reveal whether a resource exists if user doesn't own it
+- Always include userId in queries to prevent data leakage
+
+## Testing Requirements
+
+### Required Test Cases
+For every API route that accesses projects:
+
+```typescript
+describe('ObjectId Consistency', () => {
+  it('should find project with valid ObjectId string', async () => {
+    const projectId = new ObjectId().toString();
+    // Test that string projectId works correctly
+  });
+
+  it('should return 404 for non-existent project', async () => {
+    const fakeId = new ObjectId().toString();
+    // Test that non-existent projects return 404
+  });
+
+  it('should return 400 for invalid ObjectId format', async () => {
+    const invalidId = 'invalid-id-format';
+    // Test that invalid formats are rejected
+  });
+
+  it('should prevent access to other users projects', async () => {
+    // Test that users cannot access projects they don't own
+  });
+});
+```
+
+## Implementation Checklist
+
+For every new API route that accesses projects:
+- [ ] Import ObjectId from 'mongodb'
+- [ ] Use requireUser() for authentication
+- [ ] Validate ObjectId format with ObjectId.isValid()
+- [ ] Convert string projectId to ObjectId for project queries
+- [ ] Include userId in project ownership verification
+- [ ] Use string projectId for foreign key relationships
+- [ ] Return consistent error messages
+- [ ] Test all ObjectId scenarios
+
+## Code Review Checklist
+
+Before merging any PR that touches project-related API routes:
+- [ ] All project queries use `new ObjectId(projectId)`
+- [ ] All queries include userId for authorization
+- [ ] ObjectId format validation is present
+- [ ] Foreign key relationships use string IDs
+- [ ] Error messages are consistent
+- [ ] Tests cover ObjectId edge cases
+
+This rule prevents the "Project not found" errors caused by ObjectId vs string mismatches that we spent significant time debugging.

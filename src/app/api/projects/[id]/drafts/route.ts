@@ -37,7 +37,7 @@ export async function GET(
 
     // Verify project exists and user owns it
     const project = await projectsCollection.findOne({
-      _id: projectId, // projectId is stored as string, not ObjectId
+      _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId
     });
 

@@ -1,0 +1,329 @@
+---
+alwaysApply: true
+description: "Enforces consistent API architecture patterns and data access controls"
+---
+
+# API Architecture Standards
+
+## CRITICAL SECURITY REQUIREMENT
+**Every user must only access their own content**. All data operations must be scoped to the authenticated user's `userId`.
+
+## Required API Route Structure
+
+### 1. Authentication Pattern
+ALL API routes (except `/api/health`) MUST use this authentication pattern:
+
+```typescript
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
+
+export async function GET(request: Request) {
+  // ✅ REQUIRED: Authenticate user first
+  const authResult = await requireUser();
+  if (!authResult.ok) {
+    return authResult.response; // Returns 401 Unauthorized
+  }
+  
+  const { userId } = authResult;
+  
+  // ✅ REQUIRED: All database queries MUST filter by userId
+  const userResources = await collection.find({ userId }).toArray();
+  
+  return successResponse(userResources);
+}
+```
+
+### 2. Response Format Pattern
+ALL API responses MUST use the standardized response format from [src/lib/api/response.ts](mdc:src/lib/api/response.ts):
+
+```typescript
+// ✅ REQUIRED: Success responses
+return successResponse(data, statusCode?);
+
+// ✅ REQUIRED: Error responses  
+return errorResponse(message, statusCode);
+
+// Response format: { ok: true, data: T } | { ok: false, error: string }
+```
+
+### 3. Database Query Security Pattern
+ALL database operations MUST include userId filtering:
+
+```typescript
+// ✅ REQUIRED: Always filter by userId
+const userProjects = await projectsColl.find({ userId }).toArray();
+const userProject = await projectsColl.findOne({ _id: new ObjectId(id), userId });
+
+// ✅ REQUIRED: Include userId in updates
+await projectsColl.updateOne(
+  { _id: new ObjectId(id), userId }, // Must verify ownership
+  { $set: updateData }
+);
+
+// ✅ REQUIRED: Include userId in deletions
+await projectsColl.deleteOne({ _id: new ObjectId(id), userId });
+
+// ❌ FORBIDDEN: Queries without userId (except system operations)
+const allProjects = await projectsColl.find({}).toArray(); // SECURITY VIOLATION
+```
+
+## Route Protection Middleware
+
+### Required Middleware Configuration
+The [src/middleware.ts](mdc:src/middleware.ts) MUST protect all sensitive routes:
+
+```typescript
+const isProtectedRoute = createRouteMatcher([
+  '/projects(.*)',           // All project routes
+  '/api/((?!health$).*)',   // All API routes except health
+  '/dashboard(.*)',         // All dashboard routes
+  '/settings(.*)',          // All settings routes
+]);
+```
+
+### Protected Route Patterns
+These route patterns MUST be protected:
+- `/projects/*` - All project-related pages
+- `/api/*` - All API endpoints (except `/api/health`)
+- `/dashboard/*` - User dashboard areas
+- `/settings/*` - User settings pages
+
+## Error Handling Standards
+
+### Security-Conscious Error Responses
+```typescript
+// ✅ REQUIRED: Don't leak information about other users' data
+if (!resource) {
+  return errorResponse('Resource not found', 404); // Don't reveal if it exists for other users
+}
+
+// ✅ REQUIRED: Consistent error messages
+if (!ObjectId.isValid(id)) {
+  return errorResponse('Invalid ID format', 400);
+}
+
+if (!userId) {
+  return errorResponse('Unauthorized', 401);
+}
+```
+
+### Forbidden Error Patterns
+```typescript
+// ❌ FORBIDDEN: Revealing resource existence
+if (resource && resource.userId !== userId) {
+  return errorResponse('Forbidden', 403); // Reveals resource exists
+}
+
+// ❌ FORBIDDEN: Generic error messages
+catch (error) {
+  return errorResponse('Something went wrong', 500); // Too vague
+}
+```
+
+## TypeScript Standards
+
+### Required Type Safety
+ALL API routes MUST use proper TypeScript types:
+
+```typescript
+// ✅ REQUIRED: Proper parameter typing
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  const resolvedParams = await params;
+  const projectId = resolvedParams.id;
+  // ...
+}
+
+// ✅ REQUIRED: Proper response typing
+export type ApiResponse<T> = 
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+```
+
+### Schema Validation Pattern
+Use Zod schemas for request validation:
+
+```typescript
+import { z } from 'zod';
+
+const CreateProjectSchema = z.object({
+  name: z.string().min(1, 'Project name is required'),
+  description: z.string().optional(),
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const validatedData = CreateProjectSchema.parse(body);
+    // Use validatedData...
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return errorResponse(
+        `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+        400
+      );
+    }
+    // Handle other errors...
+  }
+}
+```
+
+## Database Connection Standards
+
+### Required Database Access Pattern
+ALL API routes MUST use the [src/lib/db/mongo.ts](mdc:src/lib/db/mongo.ts) connection helper:
+
+```typescript
+import { getColl } from '@/lib/db/mongo';
+import { type Project } from '@/lib/schemas/project';
+
+// ✅ REQUIRED: Use typed collections
+const projectsColl = await getColl<Project>('projects');
+const projects = await projectsColl.find({ userId }).toArray();
+```
+
+### Collection Naming Standards
+- Projects: `'projects'`
+- Assets: `'assets'`
+- Drafts: `'drafts'`
+- Chunks: `'chunks'`
+- Users: `'users'`
+
+## Testing Requirements
+
+### Required Security Tests
+Every API route MUST have tests for:
+
+```typescript
+describe('API Security', () => {
+  it('should require authentication', async () => {
+    const response = await fetch('/api/endpoint');
+    expect(response.status).toBe(401);
+  });
+
+  it('should only return current user data', async () => {
+    const user1Data = await getDataForUser(user1Token);
+    const user2Data = await getDataForUser(user2Token);
+    
+    expect(user1Data.every(item => item.userId === user1Id)).toBe(true);
+    expect(user2Data.every(item => item.userId === user2Id)).toBe(true);
+  });
+
+  it('should reject access to other user resources', async () => {
+    const response = await fetch(`/api/projects/${user1ProjectId}`, {
+      headers: { Authorization: `Bearer ${user2Token}` }
+    });
+    
+    expect(response.status).toBe(404); // Don't reveal existence
+  });
+});
+```
+
+## File Organization Standards
+
+### API Route Structure
+```
+src/app/api/
+├── health/route.ts          # Health check (no auth required)
+├── projects/
+│   ├── route.ts            # GET, POST /api/projects
+│   └── [id]/
+│       ├── route.ts        # GET, PUT, DELETE /api/projects/[id]
+│       ├── assets/route.ts # GET /api/projects/[id]/assets
+│       └── drafts/route.ts # GET /api/projects/[id]/drafts
+├── generate/route.ts       # POST /api/generate
+└── ingest/route.ts        # POST /api/ingest
+```
+
+### Required Imports Pattern
+```typescript
+// ✅ REQUIRED: Standard imports for all API routes
+import { requireUser } from '@/lib/auth/requireUser';
+import { successResponse, errorResponse } from '@/lib/api/response';
+import { getColl } from '@/lib/db/mongo';
+import { ObjectId } from 'mongodb';
+import { z } from 'zod'; // For validation
+```
+
+## Performance Standards
+
+### Database Query Optimization
+```typescript
+// ✅ REQUIRED: Use indexes and efficient queries
+const projects = await projectsColl
+  .find({ userId })
+  .sort({ createdAt: -1 }) // Most recent first
+  .toArray();
+
+// ✅ REQUIRED: Use aggregation for complex queries
+const pipeline = [
+  { $match: { userId } }, // FIRST stage must filter by userId
+  { $lookup: { ... } },
+  { $group: { ... } }
+];
+```
+
+### Response Optimization
+```typescript
+// ✅ REQUIRED: Return only necessary data
+const projects = await projectsColl
+  .find({ userId }, { 
+    projection: { 
+      name: 1, 
+      description: 1, 
+      status: 1, 
+      createdAt: 1 
+    } 
+  })
+  .toArray();
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ FORBIDDEN Security Violations
+```typescript
+// NEVER allow unrestricted queries
+const allProjects = await projectsColl.find({}).toArray(); // VIOLATION
+
+// NEVER trust client-provided userId
+const { userId } = await request.json(); // VIOLATION - get from auth
+
+// NEVER skip authentication
+export async function GET() {
+  const projects = await getColl('projects').find({}).toArray(); // VIOLATION
+}
+```
+
+### ❌ FORBIDDEN Response Patterns
+```typescript
+// NEVER use inconsistent response formats
+return { success: true, data: projects }; // Wrong format
+return projects; // Missing wrapper
+```
+
+### ❌ FORBIDDEN Database Patterns
+```typescript
+// NEVER use raw MongoDB client
+import { MongoClient } from 'mongodb'; // Use getColl instead
+
+// NEVER hardcode connection strings
+const client = new MongoClient('mongodb://localhost:27017'); // Use env vars
+```
+
+## Implementation Checklist
+
+For every new API route:
+- [ ] Uses requireUser() for authentication
+- [ ] Includes userId in all database queries
+- [ ] Uses successResponse/errorResponse helpers
+- [ ] Validates ObjectId format when needed
+- [ ] Uses proper TypeScript types
+- [ ] Includes comprehensive error handling
+- [ ] Has security tests
+- [ ] Follows consistent naming patterns
+- [ ] Uses getColl() for database access
+- [ ] Implements proper request validation
+
+This rule ensures consistent, secure, and maintainable API architecture throughout the project.

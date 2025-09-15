@@ -32,7 +32,7 @@ export async function GET(
     // Get the project and verify ownership
     const projectsColl = await getColl<Project>('projects');
     const project = await projectsColl.findOne({
-      _id: projectId, // projectId is stored as string, not ObjectId
+      _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId // Ensure user owns the project
     });
 

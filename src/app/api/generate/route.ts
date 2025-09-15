@@ -147,7 +147,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Fetch project and verify ownership
     const project = await projectsCollection.findOne({
-      _id: new ObjectId(projectId), // Convert string to ObjectId
+      _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId // Ensure user owns the project
     });
 
@@ -164,10 +164,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Use selected chunks instead of hybrid search
       const chunksCollection = await getColl('chunks');
       
-      // Get selected chunks by their IDs
+      // Get selected chunks by their IDs (chunk _id fields are stored as strings)
       const selectedChunks = await chunksCollection
         .find({ 
-          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) },
+          _id: { $in: selectedChunkIds }, // Use string IDs directly, not ObjectIds
           projectId,
           userId 
         })

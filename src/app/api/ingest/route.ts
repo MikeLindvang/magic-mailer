@@ -201,7 +201,7 @@ export async function POST(request: Request): Promise<Response> {
     // Verify project ownership
     const projectsColl = await getColl('projects');
     const project = await projectsColl.findOne({ 
-      _id: new ObjectId(projectId), 
+      _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId 
     });
     
