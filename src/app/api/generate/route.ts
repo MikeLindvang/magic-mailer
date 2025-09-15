@@ -164,10 +164,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Use selected chunks instead of hybrid search
       const chunksCollection = await getColl('chunks');
       
-      // Get selected chunks by their IDs (chunk _id fields are stored as strings)
+      // Get selected chunks by their IDs - convert strings to ObjectIds for query
       const selectedChunks = await chunksCollection
         .find({ 
-          _id: { $in: selectedChunkIds }, // Use string IDs directly, not ObjectIds
+          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) }, // Convert strings to ObjectIds
           projectId,
           userId 
         })
