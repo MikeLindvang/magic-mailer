@@ -164,18 +164,33 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Use selected chunks instead of hybrid search
       const chunksCollection = await getColl('chunks');
       
-      // Get selected chunks by their IDs - convert strings to ObjectIds for query
+      // Validate all chunk IDs are valid ObjectId format
+      const invalidIds = selectedChunkIds.filter(id => !ObjectId.isValid(id));
+      if (invalidIds.length > 0) {
+        return errorResponse(`Invalid chunk ID format: ${invalidIds.join(', ')}`, 400);
+      }
+      
+      // Get selected chunks by their IDs
+      // Note: Chunks are stored with _id as ObjectId, but selectedChunkIds come as strings
       const selectedChunks = await chunksCollection
         .find({ 
-          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) }, // Convert strings to ObjectIds
-          projectId,
-          userId 
+          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) }, // Convert strings to ObjectIds for query
+          projectId, // Use string projectId for foreign key relationships
+          $or: [
+            { userId }, // New chunks with userId field
+            { userId: { $exists: false } } // Legacy chunks without userId field
+          ]
         })
         .toArray();
 
       if (selectedChunks.length === 0) {
         return errorResponse('Selected chunks not found or access denied', 400);
       }
+      
+      // Debug: Log what we found vs what was requested
+      console.log(`[DEBUG] Requested ${selectedChunkIds.length} chunks, found ${selectedChunks.length} chunks`);
+      console.log(`[DEBUG] Requested chunk IDs:`, selectedChunkIds);
+      console.log(`[DEBUG] Found chunk IDs:`, selectedChunks.map(c => c._id.toString()));
 
       // Convert to the expected format
       const formattedChunks = selectedChunks.map(chunk => ({
@@ -205,7 +220,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       retrievalResult = await hybridRetrieve({
         projectId,
         query: searchQuery,
-        k: 8 // Get top 8 most relevant chunks
+        k: 8, // Get top 8 most relevant chunks
+        userId // Pass userId for additional security
       });
 
       if (!retrievalResult.contextPack || retrievalResult.chunks.length === 0) {

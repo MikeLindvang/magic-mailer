@@ -89,7 +89,8 @@ function extractSearchTerms(query: string): string[] {
 export async function lexicalSearch(
   projectId: string,
   query: string,
-  k: number
+  k: number,
+  userId?: string
 ): Promise<LexicalSearchResult[]> {
   if (!projectId) {
     throw new Error('Project ID is required');
@@ -115,13 +116,30 @@ export async function lexicalSearch(
       return [];
     }
 
+    // Build search filter - include userId if provided for additional security
+    const searchFilter: Record<string, unknown> = {
+      projectId,
+      $text: { $search: query.trim() }
+    };
+    
+    // Add userId filter if provided (defense in depth)
+    if (userId) {
+      searchFilter.$and = [
+        { $text: { $search: query.trim() } },
+        {
+          $or: [
+            { userId }, // New chunks with userId field
+            { userId: { $exists: false } } // Legacy chunks without userId field
+          ]
+        }
+      ];
+      delete searchFilter.$text; // Remove duplicate $text from root level
+    }
+
     // Perform MongoDB text search with projection to include text score
     const searchResults = await chunks
       .find(
-        {
-          projectId,
-          $text: { $search: query.trim() }
-        },
+        searchFilter,
         {
           projection: {
             chunkId: 1,

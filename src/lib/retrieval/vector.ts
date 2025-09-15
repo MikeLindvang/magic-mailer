@@ -63,7 +63,8 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 export async function vectorSearch(
   projectId: string,
   queryVec: number[],
-  k: number
+  k: number,
+  userId?: string
 ): Promise<VectorSearchResult[]> {
   if (!projectId) {
     throw new Error('Project ID is required');
@@ -81,13 +82,24 @@ export async function vectorSearch(
     // Get chunks collection
     const chunks = await getColl<Chunk>('chunks');
 
+    // Build query filter - include userId if provided for additional security
+    const filter: Record<string, unknown> = {
+      projectId,
+      embedding: { $exists: true, $type: "array" },
+      'embedding.0': { $exists: true } // Ensure embedding array is not empty
+    };
+    
+    // Add userId filter if provided (defense in depth)
+    if (userId) {
+      filter.$or = [
+        { userId }, // New chunks with userId field
+        { userId: { $exists: false } } // Legacy chunks without userId field
+      ];
+    }
+
     // Find all chunks in the project that have embeddings
     const projectChunks = await chunks
-      .find({
-        projectId,
-        embedding: { $exists: true, $type: "array" },
-        'embedding.0': { $exists: true } // Ensure embedding array is not empty
-      })
+      .find(filter)
       .toArray();
 
     if (projectChunks.length === 0) {

@@ -158,11 +158,13 @@ function buildContextPack(chunks: HybridSearchResult[]): string {
 export async function hybridRetrieve({
   projectId,
   query,
-  k
+  k,
+  userId
 }: {
   projectId: string;
   query: string;
   k: number;
+  userId?: string;
 }): Promise<HybridRetrievalResponse> {
   if (!projectId) {
     throw new Error('Project ID is required');
@@ -185,11 +187,11 @@ export async function hybridRetrieve({
     const searchK = Math.max(k, Math.ceil(k * 1.5));
     
     const [vectorResults, lexicalResults] = await Promise.all([
-      vectorSearch(projectId, queryEmbedding, searchK).catch(error => {
+      vectorSearch(projectId, queryEmbedding, searchK, userId).catch(error => {
         console.warn('Vector search failed:', error);
         return []; // Fallback to empty results if vector search fails
       }),
-      lexicalSearch(projectId, query.trim(), searchK).catch(error => {
+      lexicalSearch(projectId, query.trim(), searchK, userId).catch(error => {
         console.warn('Lexical search failed:', error);
         return []; // Fallback to empty results if lexical search fails
       })
