@@ -164,17 +164,18 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Use selected chunks instead of hybrid search
       const chunksCollection = await getColl('chunks');
       
-      // Validate all chunk IDs are valid ObjectId format
+      // Validate all chunk IDs are valid ObjectId format (even though stored as strings)
       const invalidIds = selectedChunkIds.filter(id => !ObjectId.isValid(id));
       if (invalidIds.length > 0) {
         return errorResponse(`Invalid chunk ID format: ${invalidIds.join(', ')}`, 400);
       }
       
       // Get selected chunks by their IDs
-      // Note: Chunks are stored with _id as ObjectId, but selectedChunkIds come as strings
+      // Note: Chunks are stored with _id as STRING (not ObjectId), selectedChunkIds are also strings
+      // This was the root cause - we were converting strings to ObjectIds but chunks store _id as strings
       const selectedChunks = await chunksCollection
         .find({ 
-          _id: { $in: selectedChunkIds.map(id => new ObjectId(id)) }, // Convert strings to ObjectIds for query
+          _id: { $in: selectedChunkIds }, // Use strings directly, no ObjectId conversion needed
           projectId, // Use string projectId for foreign key relationships
           $or: [
             { userId }, // New chunks with userId field
@@ -184,13 +185,48 @@ export async function POST(request: NextRequest): Promise<Response> {
         .toArray();
 
       if (selectedChunks.length === 0) {
-        return errorResponse('Selected chunks not found or access denied', 400);
+        return errorResponse(
+          `Selected chunks not found or access denied. Requested ${selectedChunkIds.length} chunks but found 0. This could indicate the chunks don't exist, belong to a different user, or belong to a different project.`,
+          400
+        );
+      }
+      
+      // Warn if some chunks were not found
+      if (selectedChunks.length < selectedChunkIds.length) {
+        console.warn(`[GENERATE] Warning: Requested ${selectedChunkIds.length} chunks but only found ${selectedChunks.length}. Some chunks may have been deleted or are inaccessible.`);
       }
       
       // Debug: Log what we found vs what was requested
       console.log(`[DEBUG] Requested ${selectedChunkIds.length} chunks, found ${selectedChunks.length} chunks`);
       console.log(`[DEBUG] Requested chunk IDs:`, selectedChunkIds);
-      console.log(`[DEBUG] Found chunk IDs:`, selectedChunks.map(c => c._id.toString()));
+      console.log(`[DEBUG] Found chunk IDs:`, selectedChunks.map(c => c._id));
+      
+      // Additional debugging: Let's check what chunks exist for this project/user
+      const allProjectChunks = await chunksCollection
+        .find({ projectId })
+        .limit(5) // Limit to avoid too much output
+        .toArray();
+      
+      console.log(`[DEBUG] Total chunks in project:`, allProjectChunks.length);
+      console.log(`[DEBUG] Sample chunks:`, allProjectChunks.map(c => ({
+        _id: c._id,
+        hasUserId: !!c.userId,
+        userId: c.userId,
+        projectId: c.projectId,
+        chunkId: c.chunkId
+      })));
+      
+      // Check if any of the requested chunks exist at all (ignoring userId)
+      const chunksWithoutUserFilter = await chunksCollection
+        .find({ 
+          _id: { $in: selectedChunkIds }, // Use strings directly
+          projectId
+        })
+        .toArray();
+      
+      console.log(`[DEBUG] Chunks found without userId filter:`, chunksWithoutUserFilter.length);
+      console.log(`[DEBUG] Their userIds:`, chunksWithoutUserFilter.map(c => ({ _id: c._id, userId: c.userId })));
+      console.log(`[DEBUG] Current user ID:`, userId);
 
       // Convert to the expected format
       const formattedChunks = selectedChunks.map(chunk => ({

@@ -33,6 +33,13 @@ export function GenerateTab({
       setIsGenerating(true)
       setGeneratedDraft(null) // Clear previous draft
       
+      // Debug: Log what we're sending
+      console.log('[GENERATE-TAB] Generating draft with:', {
+        projectId,
+        selectedChunkIds,
+        selectedChunkCount: selectedChunkIds.length
+      });
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
