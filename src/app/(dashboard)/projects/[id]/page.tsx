@@ -364,6 +364,8 @@ export default function ProjectDetailPage() {
             isLoading={isLoadingDrafts}
             onDraftSelected={handleDraftSelected}
             onOpenGetResponseModal={handleOpenGetResponseModal}
+            onRefresh={loadDrafts}
+            projectId={projectId}
           />
         </TabsContent>
 

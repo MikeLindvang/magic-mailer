@@ -3,24 +3,62 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Mail, FileText, Send, Loader2 } from "lucide-react"
+import { Mail, FileText, Send, Loader2, Copy, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { type Draft } from "@/lib/schemas/draft"
 import { type GeneratedDraft } from "../types"
+import { useState } from "react"
 
 interface DraftsTabProps {
   drafts: Draft[];
   isLoading: boolean;
   onDraftSelected: (draft: GeneratedDraft) => void;
   onOpenGetResponseModal: () => void;
+  onRefresh?: () => void;
+  projectId: string;
 }
 
 export function DraftsTab({ 
   drafts, 
   isLoading, 
   onDraftSelected, 
-  onOpenGetResponseModal 
+  onOpenGetResponseModal,
+  onRefresh,
+  projectId
 }: DraftsTabProps) {
+  const [deletingDraftId, setDeletingDraftId] = useState<string | null>(null);
+
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingDraftId(draftId);
+    
+    try {
+      const response = await fetch(`/api/projects/${projectId}/drafts/${draftId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!result.ok) {
+        throw new Error(result.error || 'Failed to delete draft');
+      }
+
+      toast.success('Draft deleted successfully!');
+      
+      // Refresh the drafts list if callback provided
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete draft');
+    } finally {
+      setDeletingDraftId(null);
+    }
+  };
   return (
     <Card className="tactile-card paper-texture">
       <CardHeader>
@@ -114,7 +152,21 @@ export function DraftsTab({
                       toast.success('HTML copied to clipboard!')
                     }}
                   >
+                    <Copy className="h-4 w-4 mr-1" />
                     Copy HTML
+                  </Button>
+                  
+                  <Button 
+                    size="sm"
+                    className="tactile-button-secondary"
+                    onClick={() => {
+                      // Copy plain text to clipboard
+                      navigator.clipboard.writeText(draft.formats.txt)
+                      toast.success('Plain text copied to clipboard!')
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Copy Text
                   </Button>
                   
                   <Button 
@@ -132,6 +184,21 @@ export function DraftsTab({
                   >
                     <Send className="h-4 w-4 mr-1" />
                     Send to GR
+                  </Button>
+                  
+                  <Button 
+                    size="sm"
+                    variant="destructive"
+                    className="bg-terracotta/20 text-terracotta hover:bg-terracotta/30 border border-terracotta/40"
+                    onClick={() => handleDeleteDraft(draft._id)}
+                    disabled={deletingDraftId === draft._id}
+                  >
+                    {deletingDraftId === draft._id ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-1" />
+                    )}
+                    {deletingDraftId === draft._id ? 'Deleting...' : 'Delete'}
                   </Button>
                 </div>
               </div>
