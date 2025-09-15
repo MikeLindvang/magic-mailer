@@ -31,7 +31,7 @@ export async function DELETE(
       return errorResponse('Invalid project ID format', 400);
     }
 
-    // Validate ObjectId format for draftId
+    // Validate ObjectId format for draftId (even though stored as string)
     if (!ObjectId.isValid(draftId)) {
       return errorResponse('Invalid draft ID format', 400);
     }
@@ -51,8 +51,9 @@ export async function DELETE(
     }
 
     // Check if the draft exists and belongs to this project
+    // Note: Drafts are stored with _id as STRING (not ObjectId), similar to chunks
     const draft = await draftsCollection.findOne({
-      _id: new ObjectId(draftId),
+      _id: draftId, // Use string directly, no ObjectId conversion needed
       projectId // Use string for foreign key relationship
     });
 
@@ -62,7 +63,7 @@ export async function DELETE(
 
     // Delete the draft
     const deleteResult = await draftsCollection.deleteOne({
-      _id: new ObjectId(draftId),
+      _id: draftId, // Use string directly, no ObjectId conversion needed
       projectId // Ensure we only delete drafts from this project
     });
 

@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/auth/requireUser';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
-import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 import { type Draft } from '@/lib/schemas/draft';
 

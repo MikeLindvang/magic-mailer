@@ -1,7 +1,6 @@
 import { requireUser } from '@/lib/auth/requireUser';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
-import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 
 /**

@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { requireUser, ApiResponse } from '@/lib/auth/requireUser';
 import { jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
-import { type Project } from '@/lib/schemas/project';
 import { hybridRetrieve, HybridRetrievalResponse } from '@/lib/retrieval/hybrid';
 import { ObjectId } from 'mongodb';
 

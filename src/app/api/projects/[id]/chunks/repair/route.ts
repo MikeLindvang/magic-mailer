@@ -3,7 +3,6 @@ import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
-import { type Project } from '@/lib/schemas/project';
 import { ObjectId } from 'mongodb';
 
 /**

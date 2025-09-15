@@ -2,7 +2,6 @@ import { requireUser } from '@/lib/auth/requireUser';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
-import { type Project } from '@/lib/schemas/project';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';

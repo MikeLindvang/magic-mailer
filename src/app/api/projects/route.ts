@@ -1,6 +1,5 @@
 import { requireUser } from '@/lib/auth/requireUser';
 import { getColl } from '@/lib/db/mongo';
-import { type Project } from '@/lib/schemas/project';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';

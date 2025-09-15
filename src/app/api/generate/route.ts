@@ -6,6 +6,7 @@ import { getColl } from '@/lib/db/mongo';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
 import { generateEmailPrompt, PAS_EMAIL_CONFIG } from '@/lib/llm/prompts/generate';
 import { zCreateDraft, type CreateDraft } from '@/lib/schemas/draft';
+import { type Chunk } from '@/lib/schemas/chunk';
 import { ObjectId } from 'mongodb';
 
 /**
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     if (selectedChunkIds && selectedChunkIds.length > 0) {
       // Use selected chunks instead of hybrid search
-      const chunksCollection = await getColl('chunks');
+      const chunksCollection = await getColl<Chunk>('chunks');
       
       // Validate all chunk IDs are valid ObjectId format (even though stored as strings)
       const invalidIds = selectedChunkIds.filter(id => !ObjectId.isValid(id));
