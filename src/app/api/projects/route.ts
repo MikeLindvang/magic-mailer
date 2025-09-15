@@ -30,7 +30,7 @@ export async function GET(): Promise<Response> {
 
   try {
     // Get all projects for the user
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const projects = await projectsColl
       .find({ userId })
       .sort({ createdAt: -1 }) // Most recent first
@@ -69,11 +69,11 @@ export async function POST(request: Request): Promise<Response> {
     const validatedData = CreateProjectSchema.parse(body);
 
     // Create new project
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const now = new Date().toISOString();
-    const projectId = new ObjectId().toString();
+    const projectId = new ObjectId();
     
-    const newProject: Project = {
+    const newProject = {
       _id: projectId,
       ...validatedData,
       userId,
@@ -83,7 +83,13 @@ export async function POST(request: Request): Promise<Response> {
 
     await projectsColl.insertOne(newProject);
 
-    return successResponse(newProject, 201);
+    // Return with string ID for frontend
+    const responseProject = {
+      ...newProject,
+      _id: projectId.toString(),
+    };
+
+    return successResponse(responseProject, 201);
 
   } catch (error) {
     console.error('Error creating project:', error);

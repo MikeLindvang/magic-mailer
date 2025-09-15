@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Get database collections
-    const projectsCollection = await getColl<Project>('projects');
+    const projectsCollection = await getColl('projects');
     const draftsCollection = await getColl<Draft>('drafts');
 
     // Verify project exists and user owns it

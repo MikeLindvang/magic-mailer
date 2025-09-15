@@ -39,14 +39,14 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Update the project with style_profile_id
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const updateData = {
       style_profile_id,
       updatedAt: new Date().toISOString(),
     };
 
     const result = await projectsColl.findOneAndUpdate(
-      { _id: projectId, userId }, // projectId is stored as string, not ObjectId
+      { _id: new ObjectId(projectId), userId }, // Convert string to ObjectId for query
       { $set: updateData },
       { returnDocument: 'after' }
     );
@@ -56,7 +56,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Convert ObjectId to string for frontend
-    const project: Project = {
+    const project = {
       ...result,
       _id: result._id.toString(),
     };

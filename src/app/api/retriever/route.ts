@@ -5,6 +5,7 @@ import { jsonResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Project } from '@/lib/schemas/project';
 import { hybridRetrieve, HybridRetrievalResponse } from '@/lib/retrieval/hybrid';
+import { ObjectId } from 'mongodb';
 
 /**
  * Request schema for retrieval API
@@ -41,9 +42,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { projectId, query, k } = validatedData;
 
     // Verify project ownership
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const project = await projectsColl.findOne({ 
-      _id: projectId, 
+      _id: new ObjectId(projectId), 
       userId 
     });
     

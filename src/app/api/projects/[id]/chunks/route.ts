@@ -52,7 +52,7 @@ export async function GET(
     }
 
     // Verify project ownership
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const project = await projectsColl.findOne({ 
       _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId 
@@ -187,7 +187,7 @@ export async function POST(
     }
 
     // Verify project ownership
-    const projectsColl = await getColl<Project>('projects');
+    const projectsColl = await getColl('projects');
     const project = await projectsColl.findOne({ 
       _id: new ObjectId(projectId), // Convert string to ObjectId for query
       userId 
