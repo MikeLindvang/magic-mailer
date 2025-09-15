@@ -28,11 +28,12 @@ interface DocxConversionResult {
  */
 export async function docxToMarkdown(buf: Buffer): Promise<DocxConversionResult> {
   try {
-    // Try to import mammoth dynamically
-    const mammoth = await import('mammoth') as { default: Mammoth };
+    // Import mammoth with proper error handling
+    const mammothModule = await import('mammoth');
+    const mammoth = mammothModule.default as Mammoth;
     
     // Convert DOCX to HTML first
-    const result = await mammoth.default.convertToHtml({ buffer: buf });
+    const result = await mammoth.convertToHtml({ buffer: buf });
     
     // Basic HTML to Markdown conversion
     let markdown = result.value;
@@ -77,8 +78,10 @@ export async function docxToMarkdown(buf: Buffer): Promise<DocxConversionResult>
     return { markdown };
     
   } catch (error) {
+    console.error('[DOCX] Processing error:', error);
+    
     // If mammoth is not available or conversion fails
-    if (error instanceof Error && error.message.includes('Cannot resolve module')) {
+    if (error instanceof Error && (error.message.includes('Cannot resolve module') || error.message.includes('MODULE_NOT_FOUND'))) {
       return {
         markdown: `TODO: DOCX conversion requires mammoth library. Install with: pnpm add mammoth
 

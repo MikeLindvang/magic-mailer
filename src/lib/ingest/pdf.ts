@@ -23,30 +23,33 @@ export async function pdfToMarkdown(buf: Buffer): Promise<{ markdown: string; ti
     
     console.log('[PDF] Processing buffer of size:', buf.length, 'bytes');
     
-    // Try to import pdf-parse
+    // Import pdf-parse with proper error handling
+    // Import directly from lib to avoid debug code in main index.js
     let pdfParse;
     try {
-      // Try dynamic import first
-      pdfParse = (await import('pdf-parse')).default;
-      
-      console.log('[PDF] Successfully loaded pdf-parse via dynamic import');
+      const pdfParseModule = await import('pdf-parse/lib/pdf-parse.js');
+      pdfParse = pdfParseModule.default;
       
       if (typeof pdfParse !== 'function') {
         throw new Error('pdf-parse module did not export a function');
       }
-    } catch (requireError) {
-      console.error('[PDF] Require failed, trying dynamic import:', requireError);
       
-      // Fallback to dynamic import
+      console.log('[PDF] Successfully loaded pdf-parse');
+    } catch (importError) {
+      console.error('[PDF] Import error:', importError);
+      
+      // Fallback to main module if lib import fails
       try {
-        const pdfParseModule = await import('pdf-parse');
-        pdfParse = pdfParseModule.default || pdfParseModule;
+        console.log('[PDF] Trying fallback import from main module...');
+        const fallbackModule = await import('pdf-parse');
+        pdfParse = fallbackModule.default;
         
         if (typeof pdfParse !== 'function') {
-          throw new Error('pdf-parse module did not export a function');
+          throw new Error('pdf-parse fallback module did not export a function');
         }
-      } catch (importError) {
-        console.error('[PDF] Import error:', importError);
+        
+        console.log('[PDF] Successfully loaded pdf-parse via fallback');
+      } catch (fallbackError) {
         throw new Error(`Failed to load PDF parser: ${importError instanceof Error ? importError.message : 'Unknown import error'}`);
       }
     }
@@ -241,8 +244,16 @@ export async function extractPdfMetadata(buf: Buffer): Promise<{
       throw new Error(`Expected Buffer but received ${typeof buf}`);
     }
     
-    // For metadata, we need to call pdf-parse to get the info object
-    const pdfParse = (await import('pdf-parse')).default;
+    // Import pdf-parse for metadata extraction (avoid debug code)
+    let pdfParse;
+    try {
+      const pdfParseModule = await import('pdf-parse/lib/pdf-parse.js');
+      pdfParse = pdfParseModule.default;
+    } catch (importError) {
+      // Fallback to main module
+      const fallbackModule = await import('pdf-parse');
+      pdfParse = fallbackModule.default;
+    }
     
     const data = await pdfParse(buf);
     const info = data.info || {};
