@@ -3,8 +3,5 @@
     "src/app/api/ingest/route.ts": {
       "maxDuration": 30
     }
-  },
-  "limits": {
-    "duration": 30000
   }
 }
