@@ -100,8 +100,21 @@ export function ContentIngestionForm({ projectId, onAssetCreated }: ContentInges
       }
 
       if (!response.ok) {
-        const result = await response.json()
-        throw new Error(result.error || `Failed to ingest content (${response.status})`)
+        // Handle different error types
+        if (response.status === 413) {
+          throw new Error('File too large. Please select a file smaller than 10MB.')
+        }
+        
+        try {
+          const result = await response.json()
+          throw new Error(result.error || `Failed to ingest content (${response.status})`)
+        } catch (jsonError) {
+          // If response is not JSON (e.g., server error page)
+          if (response.status === 413) {
+            throw new Error('File too large. Please select a file smaller than 10MB.')
+          }
+          throw new Error(`Server error (${response.status}). Please try again.`)
+        }
       }
 
       const result = await response.json()

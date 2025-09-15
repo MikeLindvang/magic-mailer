@@ -80,29 +80,78 @@ export async function POST(request: Request): Promise<Response> {
         return errorResponse('File is required', 400);
       }
 
+      // Validate file size (limit to 10MB)
+      const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxFileSize) {
+        return errorResponse(
+          `File size too large. Maximum allowed size is ${maxFileSize / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+          413
+        );
+      }
+
+      console.log(`[INGEST] Processing file: ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
+
       // Validate file type
       const fileName = file.name.toLowerCase();
       if (fileName.endsWith('.pdf')) {
         assetType = 'pdf';
         try {
           const buffer = Buffer.from(await file.arrayBuffer());
+          console.log(`[INGEST] Converting PDF buffer of size ${buffer.length} bytes`);
+          
           const result = await extractTextFromPdf(buffer);
           markdown = result.markdown;
           extractedTitle = result.title;
+          
+          console.log(`[INGEST] PDF processing successful, extracted ${markdown.length} characters`);
         } catch (error) {
           console.error('PDF processing error:', error);
-          return errorResponse('Failed to process PDF file', 400);
+          
+          // Provide more specific error messages
+          let errorMessage = 'Failed to process PDF file';
+          if (error instanceof Error) {
+            if (error.message.includes('Invalid PDF')) {
+              errorMessage = 'The uploaded file is not a valid PDF document';
+            } else if (error.message.includes('password') || error.message.includes('encrypted')) {
+              errorMessage = 'PDF is password protected or encrypted and cannot be processed';
+            } else if (error.message.includes('corrupted')) {
+              errorMessage = 'PDF file appears to be corrupted';
+            } else if (error.message.includes('Failed to load PDF parser')) {
+              errorMessage = 'Server error: PDF processing library unavailable';
+            } else {
+              errorMessage = `PDF processing failed: ${error.message}`;
+            }
+          }
+          
+          return errorResponse(errorMessage, 400);
         }
       } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
         assetType = 'docx';
         try {
           const buffer = Buffer.from(await file.arrayBuffer());
+          console.log(`[INGEST] Converting DOCX buffer of size ${buffer.length} bytes`);
+          
           const result = await extractTextFromDocx(buffer);
           markdown = result.markdown;
           extractedTitle = result.title;
+          
+          console.log(`[INGEST] DOCX processing successful, extracted ${markdown.length} characters`);
         } catch (error) {
           console.error('DOCX processing error:', error);
-          return errorResponse('Failed to process DOCX file', 400);
+          
+          // Provide more specific error messages
+          let errorMessage = 'Failed to process DOCX file';
+          if (error instanceof Error) {
+            if (error.message.includes('Cannot resolve module') || error.message.includes('mammoth')) {
+              errorMessage = 'Server error: DOCX processing library unavailable';
+            } else if (error.message.includes('ZIP signature')) {
+              errorMessage = 'The uploaded file is not a valid DOCX document';
+            } else {
+              errorMessage = `DOCX processing failed: ${error.message}`;
+            }
+          }
+          
+          return errorResponse(errorMessage, 400);
         }
       } else if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
         assetType = 'md';
