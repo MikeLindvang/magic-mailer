@@ -172,10 +172,12 @@ async function testEmailPrompt(contextPack) {
       projectName: 'AI Email Test Project',
       audience: 'Busy professionals struggling with productivity',
       length: 'medium',
+      tone: 'hype',
       constraints: 'Keep tone conversational and focus on time-saving benefits',
       mustInclude: 'Mention specific statistics and customer testimonials',
       contextPack,
-      defaultLink: 'https://example.com/product?utm_source=newsletter'
+      defaultLink: 'https://example.com/product?utm_source=newsletter',
+      hypeLevel: 4 // Test spicy hype level
     });
     
     console.log('✅ Email prompt generated successfully');
@@ -243,6 +245,16 @@ async function testOpenAIGeneration(prompt) {
     console.log(`  HTML length: ${emailData.html?.length || 0} chars`);
     console.log(`  Markdown length: ${emailData.md?.length || 0} chars`);
     console.log(`  Text length: ${emailData.txt?.length || 0} chars`);
+    
+    // Test subject candidates feature
+    if (emailData.__subject_candidates) {
+      console.log('🎯 Subject candidates generated:');
+      emailData.__subject_candidates.forEach((candidate, i) => {
+        console.log(`  ${i + 1}. "${candidate}"`);
+      });
+    } else {
+      console.log('⚠️  No subject candidates found (this is expected after post-processing)');
+    }
     
     return emailData;
   } catch (error) {

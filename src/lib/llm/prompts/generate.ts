@@ -121,6 +121,11 @@ export interface GenerateEmailOptions {
   mustInclude?: string;
   contextPack: string;
   defaultLink?: string;
+  /**
+   * 1 = mild hype, 3 = default, 5 = spicy
+   * Only affects the re-ranker scoring (not the email body tone).
+   */
+  hypeLevel?: 1 | 2 | 3 | 4 | 5;
 }
 
 /**
@@ -198,6 +203,19 @@ export function generateEmailPrompt({
 ## CONTEXT INFORMATION
 ${contextPack}
 
+## SUBJECT CANDIDATE GENERATION
+Generate 8 subject line candidates that:
+- Vary by INTENT: {Curiosity, Urgency, Specificity/Benefit, Social Proof, Contrarian, How-To, Number-Led, Question}
+- Vary HYPE LEVEL: 3 mild, 3 medium, 2 spicy (creative but avoid the banned lexemes below)
+- Include one concrete detail from CONTEXT when possible (feature, metric, timeframe, audience, product)
+- ≤ 60 chars; natural language; no emojis; max one ! or ?; avoid ALL-CAPS (acronyms allowed).
+- Include exactly 1 quirky/metaphor candidate (grounded in context, not random).
+
+BANNED LEXEMES (avoid these word families; case-insensitive):
+unleash, unlock, ultimate, skyrocket, game-changer, revolutionize, secret(s), hack(s), dominate, crush, killer, insane, crazy, next-level, 10x, x10, masterclass, life-changing, "click here".
+
+Return them in a JSON array under "__subject_candidates" (strings only). Use these rules silently; in the final output, include only the chosen subject.
+
 ## EMAIL REQUIREMENTS
 - **Project**: ${projectName}
 - **Angle**: ${angle} (Problem-Agitate-Solution structure)
@@ -220,11 +238,12 @@ You must respond with a valid JSON object containing exactly these fields:
 
 \`\`\`json
 {
-  "subject": "Compelling subject line (45 characters or less preferred). DO NOT use AI tropes like 'Unleashed' or 'Skyrocket'.",
+  "subject": "Compelling subject line (≤45 chars preferred, ≤60 hard cap). Natural language; avoid banned lexemes above. Include a concrete detail from CONTEXT when possible.",
   "preheader": "Supporting preview text that complements the subject",
   "html": "Full HTML email with proper structure, inline CSS for email clients, and tactile design elements",
   "md": "Clean markdown version with proper formatting and structure",
-  "txt": "Plain text version that's readable and well-formatted"
+  "txt": "Plain text version that's readable and well-formatted",
+  "__subject_candidates": ["...", "..."]
 }
 \`\`\`
 

@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
 import { generateEmailPrompt, getEmailConfig, getAvailableTones, getAvailableStyles } from '@/lib/llm/prompts/generate';
+import { chooseBestSubject } from '@/lib/email/postProcess';
 import { zCreateDraft, type CreateDraft } from '@/lib/schemas/draft';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { ObjectId } from 'mongodb';
@@ -24,6 +25,7 @@ const zGenerateRequest = z.object({
   mustInclude: z.string().optional(),
   linkOverrides: z.record(z.string()).optional(),
   query: z.string().optional(), // Optional custom query, defaults to project name
+  hypeLevel: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).optional(),
 });
 
 // type GenerateRequest = z.infer<typeof zGenerateRequest>;
@@ -37,6 +39,7 @@ const zGeneratedEmail = z.object({
   html: z.string(),
   md: z.string(),
   txt: z.string(),
+  __subject_candidates: z.array(z.string()).optional(),
 });
 
 type GeneratedEmail = z.infer<typeof zGeneratedEmail>;
@@ -139,6 +142,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       mustInclude,
       linkOverrides,
       query,
+      hypeLevel,
     } = validatedRequest;
 
     // Get database collections
@@ -287,16 +291,20 @@ export async function POST(request: NextRequest): Promise<Response> {
       constraints: constraints,
       mustInclude: mustInclude,
       contextPack: retrievalResult.contextPack,
-      defaultLink: defaultLink
+      defaultLink: defaultLink,
+      hypeLevel: hypeLevel
     });
 
     // Generate email content using LLM
     const generatedEmail = await generateEmailContent(prompt);
 
+    // Re-rank subjects while keeping the fun, clicky vibe
+    const finalEmail = chooseBestSubject(generatedEmail, retrievalResult.contextPack, hypeLevel ?? 3);
+
     // Apply link overrides if provided
-    let finalHtml = generatedEmail.html;
-    let finalMd = generatedEmail.md;
-    let finalTxt = generatedEmail.txt;
+    let finalHtml = finalEmail.html;
+    let finalMd = finalEmail.md;
+    let finalTxt = finalEmail.txt;
 
     if (linkOverrides && Object.keys(linkOverrides).length > 0) {
       Object.entries(linkOverrides).forEach(([placeholder, url]) => {
@@ -314,8 +322,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     const draft: CreateDraft = {
       projectId,
       angle,
-      subject: generatedEmail.subject,
-      preheader: generatedEmail.preheader,
+      subject: finalEmail.subject,
+      preheader: finalEmail.preheader,
       formats: {
         html: finalHtml,
         md: finalMd,
