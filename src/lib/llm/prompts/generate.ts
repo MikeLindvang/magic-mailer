@@ -220,7 +220,7 @@ You must respond with a valid JSON object containing exactly these fields:
 
 \`\`\`json
 {
-  "subject": "Compelling subject line (45 characters or less preferred)",
+  "subject": "Compelling subject line (45 characters or less preferred). DO NOT use AI tropes like 'Unleashed' or 'Skyrocket'.",
   "preheader": "Supporting preview text that complements the subject",
   "html": "Full HTML email with proper structure, inline CSS for email clients, and tactile design elements",
   "md": "Clean markdown version with proper formatting and structure",
