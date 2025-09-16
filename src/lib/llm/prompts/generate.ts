@@ -180,6 +180,63 @@ function adjustLengthGuidance(
 }
 
 /**
+ * Calculate effective hype level based on tone, style, and user input
+ */
+function calculateEffectiveHypeLevel(
+  tone?: keyof typeof TONE_MODIFIERS,
+  style?: keyof typeof STYLE_MODIFIERS,
+  userHypeLevel?: 1 | 2 | 3 | 4 | 5
+): 1 | 2 | 3 | 4 | 5 {
+  let baseHype = userHypeLevel || 3; // Default to 3 if not specified
+  
+  // Tone adjustments
+  const toneAdjustments: Record<string, number> = {
+    'hype': +1,           // Hype tone increases hype level
+    'humorous': +0.5,     // Humor slightly increases hype
+    'authoritative': -0.5, // Authority slightly decreases hype
+    'professional': -1,   // Professional decreases hype level
+    'empathetic': 0,      // Empathetic is neutral
+    'conversational': 0   // Conversational is neutral
+  };
+  
+  // Style adjustments
+  const styleAdjustments: Record<string, number> = {
+    'storytelling': +0.5,  // Stories can be more engaging
+    'listicle': +0.5,      // Lists are naturally more clickable
+    'visual': +1,        // Visual language is more engaging
+    'datadriven': -1,    // Data-driven is more conservative
+    'direct': 0            // Direct is neutral
+  };
+  
+  // Apply adjustments
+  if (tone && toneAdjustments[tone] !== undefined) {
+    baseHype += toneAdjustments[tone];
+  }
+  
+  if (style && styleAdjustments[style] !== undefined) {
+    baseHype += styleAdjustments[style];
+  }
+  
+  // Clamp to valid range and round
+  return Math.max(1, Math.min(5, Math.round(baseHype))) as 1 | 2 | 3 | 4 | 5;
+}
+
+/**
+ * Generate hype level instructions for email content
+ */
+function getHypeLevelInstructions(effectiveHypeLevel: 1 | 2 | 3 | 4 | 5): string {
+  const hypeInstructions: Record<number, string> = {
+    1: 'Keep content measured and professional. Use calm, rational language. Avoid exclamation points and urgency language. Focus on facts and logical benefits.',
+    2: 'Use moderate enthusiasm. Include some energy but keep it controlled. Occasional urgency is fine but don\'t overdo it.',
+    3: 'Balance professionalism with engaging energy. Use natural enthusiasm and moderate urgency when appropriate. This is the default balanced approach.',
+    4: 'Increase energy and excitement. Use more dynamic language, create urgency, and include emotional triggers. Be bold but not over-the-top.',
+    5: 'Maximum energy and excitement! Use power words, create strong urgency, leverage FOMO, and be boldly persuasive. Push creative boundaries while avoiding banned lexemes.'
+  };
+  
+  return hypeInstructions[effectiveHypeLevel];
+}
+
+/**
  * Generate the system prompt for PAS email generation with tone and style modifiers
  */
 export function generateEmailPrompt({
@@ -192,11 +249,14 @@ export function generateEmailPrompt({
   constraints,
   mustInclude,
   contextPack,
-  defaultLink
+  defaultLink,
+  hypeLevel
 }: GenerateEmailOptions): string {
+  const effectiveHypeLevel = calculateEffectiveHypeLevel(tone, style, hypeLevel);
   const lengthGuidance = adjustLengthGuidance(length, style);
   const toneInstructions = getToneInstructions(tone);
   const styleInstructions = getStyleInstructions(style);
+  const hypeLevelInstructions = getHypeLevelInstructions(effectiveHypeLevel);
 
   return `You are an expert email copywriter specializing in the PAS (Problem-Agitate-Solution) framework. Generate a compelling email using ONLY the facts and information provided in the context below.
 
@@ -223,6 +283,7 @@ Return them in a JSON array under "__subject_candidates" (strings only). Use the
 - **Length**: ${lengthGuidance}
 - **Tone**: ${tone ? TONE_MODIFIERS[tone].name : 'Conversational'} - ${tone ? TONE_MODIFIERS[tone].description : 'Friendly and approachable'}
 - **Style**: ${style ? STYLE_MODIFIERS[style].name : 'Direct'} - ${style ? STYLE_MODIFIERS[style].description : 'Straight to the point'}
+- **Energy Level**: ${effectiveHypeLevel}/5 - ${hypeLevelInstructions}
 ${constraints ? `- **Constraints**: ${constraints}` : ''}
 ${mustInclude ? `- **Must Include**: ${mustInclude}` : ''}
 ${defaultLink ? `- **Primary Link**: ${defaultLink}` : ''}
@@ -280,16 +341,39 @@ Generate the email now using the PAS framework and the provided context informat
 }
 
 /**
- * Get email configuration with tone-based temperature adjustment
+ * Get email configuration with tone and hype level adjustments
  */
-export function getEmailConfig(tone?: keyof typeof TONE_MODIFIERS) {
+export function getEmailConfig(
+  tone?: keyof typeof TONE_MODIFIERS, 
+  style?: keyof typeof STYLE_MODIFIERS,
+  hypeLevel?: 1 | 2 | 3 | 4 | 5
+) {
   const baseTone = TONE_MODIFIERS.conversational;
   const selectedTone = tone ? TONE_MODIFIERS[tone] : baseTone;
+  const effectiveHypeLevel = calculateEffectiveHypeLevel(tone, style, hypeLevel);
+  
+  // Base temperature from tone
+  let temperature = 0.7 + selectedTone.temperatureAdjustment;
+  
+  // Adjust temperature based on effective hype level
+  const hypeTemperatureAdjustment: Record<number, number> = {
+    1: -0.2,  // Lower creativity for measured content
+    2: -0.1,  // Slightly lower creativity
+    3: 0,     // Neutral (default)
+    4: +0.1,  // Higher creativity for energetic content
+    5: +0.2   // Maximum creativity for spicy content
+  };
+  
+  temperature += hypeTemperatureAdjustment[effectiveHypeLevel];
+  
+  // Adjust max tokens for higher hype levels (more expressive content)
+  const maxTokens = effectiveHypeLevel >= 4 ? 2200 : 2000;
   
   return {
-    maxTokens: 2000,
-    temperature: Math.max(0.1, Math.min(1.0, 0.7 + selectedTone.temperatureAdjustment)),
-    model: 'gpt-4o-mini'
+    maxTokens,
+    temperature: Math.max(0.1, Math.min(1.0, temperature)),
+    model: 'gpt-4o-mini',
+    effectiveHypeLevel // Export this for use in post-processing
   } as const;
 }
 
@@ -319,3 +403,8 @@ export function getAvailableStyles(): Array<{key: string, name: string, descript
     description: config.description
   }));
 }
+
+/**
+ * Export the effective hype level calculation for external use
+ */
+export { calculateEffectiveHypeLevel };

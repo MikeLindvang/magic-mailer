@@ -71,7 +71,7 @@ function addUtmParams(url: string, projectId: string): string {
 /**
  * Call OpenAI API to generate email content
  */
-async function generateEmailContent(prompt: string): Promise<GeneratedEmail> {
+async function generateEmailContent(prompt: string, config = getEmailConfig()): Promise<GeneratedEmail> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -79,15 +79,15 @@ async function generateEmailContent(prompt: string): Promise<GeneratedEmail> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: getEmailConfig().model, // Use the base config model
+      model: config.model,
       messages: [
         {
           role: 'system',
           content: prompt
         }
       ],
-      max_tokens: getEmailConfig().maxTokens, // Use the base config maxTokens
-      temperature: getEmailConfig().temperature, // Use the base config temperature
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
       response_format: { type: 'json_object' }
     }),
   });
@@ -280,6 +280,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       defaultLink = addUtmParams(project.default_link, projectId);
     }
 
+    // Get email configuration with hype level adjustments
+    const emailConfig = getEmailConfig(tone, style, hypeLevel);
+
     // Generate email prompt
     const prompt = generateEmailPrompt({
       angle: angle,
@@ -295,11 +298,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       hypeLevel: hypeLevel
     });
 
-    // Generate email content using LLM
-    const generatedEmail = await generateEmailContent(prompt);
+    // Generate email content using LLM with enhanced configuration
+    const generatedEmail = await generateEmailContent(prompt, emailConfig);
 
-    // Re-rank subjects while keeping the fun, clicky vibe
-    const finalEmail = chooseBestSubject(generatedEmail, retrievalResult.contextPack, hypeLevel ?? 3);
+    // Re-rank subjects using the effective hype level
+    const finalEmail = chooseBestSubject(generatedEmail, retrievalResult.contextPack, emailConfig.effectiveHypeLevel);
 
     // Apply link overrides if provided
     let finalHtml = finalEmail.html;
