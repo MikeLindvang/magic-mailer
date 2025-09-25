@@ -205,7 +205,7 @@ export async function POST(
     // Get existing chunk titles for uniqueness enforcement
     const chunksColl = await getColl<Chunk>('chunks');
     const existingChunks = await chunksColl.find({ projectId }).toArray();
-    const existingTitles = new Set(existingChunks.map(c => c.title).filter(Boolean));
+    const existingTitles = new Set(existingChunks.map(c => c.title).filter((title): title is string => Boolean(title)));
 
     // Generate title and tags using AI
     let title: string | undefined;
