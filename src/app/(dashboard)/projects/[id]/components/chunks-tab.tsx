@@ -35,6 +35,7 @@ interface ChunksTabProps {
   onChunksChange?: () => void
   selectedChunkIds?: string[]
   onChunkSelectionChange?: (chunkIds: string[]) => void
+  focusTopic?: string // Optional focus topic for highlighting relevant chunks
 }
 
 interface EditingChunk {
@@ -49,7 +50,8 @@ export function ChunksTab({
   isLoading = false, 
   onChunksChange,
   selectedChunkIds = [],
-  onChunkSelectionChange
+  onChunkSelectionChange,
+  focusTopic
 }: ChunksTabProps) {
   const [chunks, setChunks] = useState<ChunkWithAsset[]>([])
   const [isLoadingChunks, setIsLoadingChunks] = useState(true)
@@ -67,6 +69,7 @@ export function ChunksTab({
   const [selectedAsset, setSelectedAsset] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedDateRange, setSelectedDateRange] = useState<string>('all')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   
   // Form state for creating new chunk
@@ -351,12 +354,13 @@ export function ChunksTab({
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      const matchesTitle = chunk.meta?.hpath?.[0]?.toLowerCase().includes(query)
+      const matchesTitle = chunk.title?.toLowerCase().includes(query)
+      const matchesLegacyTitle = chunk.meta?.hpath?.[0]?.toLowerCase().includes(query)
       const matchesContent = chunk.md_text.toLowerCase().includes(query)
       const matchesAsset = chunk.assetTitle?.toLowerCase().includes(query)
       const matchesSection = chunk.section?.toLowerCase().includes(query)
       
-      if (!matchesTitle && !matchesContent && !matchesAsset && !matchesSection) {
+      if (!matchesTitle && !matchesLegacyTitle && !matchesContent && !matchesAsset && !matchesSection) {
         return false
       }
     }
@@ -397,6 +401,13 @@ export function ChunksTab({
       }
     }
 
+    // Tag filter (AND logic - chunk must contain ALL selected tags)
+    if (selectedTags.length > 0) {
+      const chunkTags = chunk.tags || []
+      const hasAllTags = selectedTags.every(tag => chunkTags.includes(tag))
+      if (!hasAllTags) return false
+    }
+
     return true
   })
 
@@ -414,16 +425,24 @@ export function ChunksTab({
       .map(chunk => chunk.assetType!)
   )).sort()
 
+  // Get unique tags for tag filter
+  const uniqueTags = Array.from(new Set(
+    chunks
+      .filter(chunk => chunk.tags && chunk.tags.length > 0)
+      .flatMap(chunk => chunk.tags!)
+  )).sort()
+
   // Clear all filters
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedAsset('all')
     setSelectedType('all')
     setSelectedDateRange('all')
+    setSelectedTags([])
   }
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery.trim() || selectedAsset !== 'all' || selectedType !== 'all' || selectedDateRange !== 'all'
+  const hasActiveFilters = searchQuery.trim() || selectedAsset !== 'all' || selectedType !== 'all' || selectedDateRange !== 'all' || selectedTags.length > 0
 
   // Handle chunk selection
   const handleChunkToggle = (chunkId: string) => {
@@ -454,6 +473,49 @@ export function ChunksTab({
   const handleClearSelection = () => {
     if (!onChunkSelectionChange) return
     onChunkSelectionChange([])
+  }
+
+  // Handle tag selection
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    )
+  }
+
+  // Helper function to highlight search terms
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm.trim()) return text
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    const parts = text.split(regex)
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-terracotta/20 text-charcoal px-1 rounded-sm">
+          {part}
+        </mark>
+      ) : part
+    )
+  }
+
+  // Helper function to check if chunk is relevant to focus topic
+  const isChunkRelevantToTopic = (chunk: ChunkWithAsset, topic: string) => {
+    if (!topic.trim()) return false
+    
+    const topicLower = topic.toLowerCase()
+    
+    // Check title match
+    if (chunk.title?.toLowerCase().includes(topicLower)) return true
+    
+    // Check tag matches
+    if (chunk.tags && chunk.tags.some(tag => tag.toLowerCase().includes(topicLower))) return true
+    
+    // Check content match
+    if (chunk.md_text.toLowerCase().includes(topicLower)) return true
+    
+    return false
   }
 
   // Get icon for asset type
@@ -673,7 +735,7 @@ export function ChunksTab({
               Filters
               {hasActiveFilters && (
                 <Badge variant="default" className="ml-2 h-5 w-5 p-0 text-xs">
-                  {[searchQuery.trim() ? 1 : 0, selectedAsset !== 'all' ? 1 : 0, selectedType !== 'all' ? 1 : 0, selectedDateRange !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
+                  {[searchQuery.trim() ? 1 : 0, selectedAsset !== 'all' ? 1 : 0, selectedType !== 'all' ? 1 : 0, selectedDateRange !== 'all' ? 1 : 0, selectedTags.length > 0 ? 1 : 0].reduce((a, b) => a + b, 0)}
                 </Badge>
               )}
             </Button>
@@ -693,62 +755,95 @@ export function ChunksTab({
 
           {/* Filter Controls */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-parchment/50 border border-charcoal/10 rounded-squircle-sm">
-              {/* Asset Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
-                  <FileText className="h-3 w-3" />
-                  Asset Source
-                </label>
-                <select
-                  className="tactile-input w-full text-sm"
-                  value={selectedAsset}
-                  onChange={(e) => setSelectedAsset(e.target.value)}
-                >
-                  <option value="all">All Sources</option>
-                  <option value="custom">User Created</option>
-                  <option value="assets">From Assets</option>
-                  {uniqueAssets.map(asset => (
-                    <option key={asset} value={asset}>{asset}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-4 p-4 bg-parchment/50 border border-charcoal/10 rounded-squircle-sm">
+              {/* Tag Filter */}
+              {uniqueTags.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
+                    <Filter className="h-3 w-3" />
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => handleTagToggle(tag)}
+                        className={`px-3 py-1 text-xs font-body rounded-squircle-sm border transition-all duration-200 ${
+                          selectedTags.includes(tag)
+                            ? 'bg-terracotta text-parchment border-terracotta'
+                            : 'bg-parchment text-charcoal border-charcoal/20 hover:border-terracotta/50 hover:bg-terracotta/10'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="text-xs text-charcoal/60 font-body">
+                      Showing chunks with all selected tags: {selectedTags.join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Type Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
-                  <Filter className="h-3 w-3" />
-                  File Type
-                </label>
-                <select
-                  className="tactile-input w-full text-sm"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  {uniqueTypes.map(type => (
-                    <option key={type} value={type}>{type.toUpperCase()}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Other Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Asset Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
+                    <FileText className="h-3 w-3" />
+                    Asset Source
+                  </label>
+                  <select
+                    className="tactile-input w-full text-sm"
+                    value={selectedAsset}
+                    onChange={(e) => setSelectedAsset(e.target.value)}
+                  >
+                    <option value="all">All Sources</option>
+                    <option value="custom">User Created</option>
+                    <option value="assets">From Assets</option>
+                    {uniqueAssets.map(asset => (
+                      <option key={asset} value={asset}>{asset}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Date Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
-                  <Calendar className="h-3 w-3" />
-                  Created
-                </label>
-                <select
-                  className="tactile-input w-full text-sm"
-                  value={selectedDateRange}
-                  onChange={(e) => setSelectedDateRange(e.target.value)}
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">Past Week</option>
-                  <option value="month">Past Month</option>
-                  <option value="quarter">Past 3 Months</option>
-                </select>
+                {/* Type Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
+                    <Filter className="h-3 w-3" />
+                    File Type
+                  </label>
+                  <select
+                    className="tactile-input w-full text-sm"
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                  >
+                    <option value="all">All Types</option>
+                    {uniqueTypes.map(type => (
+                      <option key={type} value={type}>{type.toUpperCase()}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-body font-medium text-charcoal flex items-center gap-2">
+                    <Calendar className="h-3 w-3" />
+                    Created
+                  </label>
+                  <select
+                    className="tactile-input w-full text-sm"
+                    value={selectedDateRange}
+                    onChange={(e) => setSelectedDateRange(e.target.value)}
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Past Week</option>
+                    <option value="month">Past Month</option>
+                    <option value="quarter">Past 3 Months</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
@@ -804,7 +899,14 @@ export function ChunksTab({
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredChunks.map((chunk) => (
-            <Card key={chunk._id} className="tactile-card paper-texture">
+            <Card 
+              key={chunk._id} 
+              className={`tactile-card paper-texture ${
+                focusTopic && isChunkRelevantToTopic(chunk, focusTopic)
+                  ? 'border-l-4 border-l-sage bg-sage/5'
+                  : ''
+              }`}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   {/* Selection checkbox - only show if selection is enabled */}
@@ -835,7 +937,23 @@ export function ChunksTab({
                       )}
                     </div>
                     <CardTitle className="font-headline text-charcoal text-base font-semibold truncate">
-                      {chunk.meta?.hpath?.[0] || 'Untitled Chunk'}
+                      <div className="flex items-center gap-2">
+                        {searchQuery.trim() && chunk.title ? (
+                          <span className="flex items-center gap-1">
+                            {highlightSearchTerm(chunk.title, searchQuery)}
+                            <span className="text-xs text-terracotta font-body font-normal">
+                              (AI Title)
+                            </span>
+                          </span>
+                        ) : (
+                          chunk.title || `Chunk #${chunks.indexOf(chunk) + 1}`
+                        )}
+                        {focusTopic && isChunkRelevantToTopic(chunk, focusTopic) && (
+                          <Badge variant="outline" className="text-xs bg-sage/10 border-sage/30 text-sage">
+                            Relevant
+                          </Badge>
+                        )}
+                      </div>
                     </CardTitle>
                   </div>
                   
@@ -879,12 +997,34 @@ export function ChunksTab({
                       {chunk.assetType}
                     </Badge>
                   )}
+                  {chunk.tags && chunk.tags.length > 0 && (
+                    <>
+                      {chunk.tags.slice(0, 3).map(tag => (
+                        <Badge 
+                          key={tag} 
+                          variant="outline" 
+                          className="text-xs bg-sage/10 border-sage/30 text-sage"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                      {chunk.tags.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{chunk.tags.length - 3}
+                        </Badge>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardHeader>
               
               <CardContent>
                 <p className="font-body text-charcoal/70 text-sm line-clamp-4 mb-3">
-                  {chunk.md_text}
+                  {searchQuery.trim() ? (
+                    highlightSearchTerm(chunk.md_text, searchQuery)
+                  ) : (
+                    chunk.md_text
+                  )}
                 </p>
                 
                 <div className="flex items-center justify-between text-xs text-charcoal/50">

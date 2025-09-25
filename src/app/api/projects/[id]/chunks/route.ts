@@ -3,6 +3,8 @@ import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { type Asset } from '@/lib/schemas/asset';
+import { titleAndTagChunk } from '@/services/chunkLabeler';
+import { callOpenAIJSON } from '@/services/providers/openaiCaller';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
@@ -200,6 +202,33 @@ export async function POST(
     const body = await request.json();
     const validatedData = CreateCustomChunkSchema.parse(body);
 
+    // Get existing chunk titles for uniqueness enforcement
+    const chunksColl = await getColl<Chunk>('chunks');
+    const existingChunks = await chunksColl.find({ projectId }).toArray();
+    const existingTitles = new Set(existingChunks.map(c => c.title).filter(Boolean));
+
+    // Generate title and tags using AI
+    let title: string | undefined;
+    let tags: string[] | undefined;
+    let confidence: number | undefined;
+
+    try {
+      const labelResult = await titleAndTagChunk(validatedData.content, {
+        callModel: callOpenAIJSON,
+        existingTitles: Array.from(existingTitles),
+        contextHint: project.title, // Use project title as context
+        maxChars: 2000,
+      });
+
+      title = labelResult.title;
+      tags = labelResult.tags;
+      confidence = labelResult.confidence;
+    } catch (error) {
+      console.warn(`Failed to generate title/tags for custom chunk:`, error);
+      // Fallback to using the provided title
+      title = validatedData.title;
+    }
+
     // Create custom chunk
     const chunkId = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const chunk: Chunk = {
@@ -215,11 +244,13 @@ export async function POST(
         hpath: [validatedData.title],
       },
       vector: false, // Custom chunks don't have embeddings by default
+      title,
+      tags,
+      confidence,
       createdAt: new Date(),
     };
 
     // Insert the chunk
-    const chunksColl = await getColl<Chunk>('chunks');
     await chunksColl.insertOne(chunk);
 
     return successResponse({

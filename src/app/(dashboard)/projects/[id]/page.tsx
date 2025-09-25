@@ -42,6 +42,9 @@ export default function ProjectDetailPage() {
   
   // State for chunk selection
   const [selectedChunkIds, setSelectedChunkIds] = useState<string[]>([])
+  
+  // State for focus topic (shared between generate and chunks tabs)
+  const [focusTopic, setFocusTopic] = useState<string>('')
 
   // Load project from API
   const loadProject = useCallback(async () => {
@@ -344,6 +347,7 @@ export default function ProjectDetailPage() {
             isLoading={isLoadingProject}
             selectedChunkIds={selectedChunkIds}
             onChunkSelectionChange={handleChunkSelectionChange}
+            focusTopic={focusTopic}
           />
         </TabsContent>
 
@@ -355,6 +359,8 @@ export default function ProjectDetailPage() {
             onDraftGenerated={handleDraftGenerated}
             onOpenGetResponseModal={handleOpenGetResponseModal}
             onDraftsChange={loadDrafts}
+            focusTopic={focusTopic}
+            onFocusTopicChange={setFocusTopic}
           />
         </TabsContent>
 

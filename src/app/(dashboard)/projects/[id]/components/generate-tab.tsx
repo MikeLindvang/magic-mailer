@@ -15,6 +15,8 @@ interface GenerateTabProps {
   onDraftGenerated: (draft: GeneratedDraft) => void;
   onOpenGetResponseModal: () => void;
   onDraftsChange: () => void;
+  focusTopic?: string;
+  onFocusTopicChange?: (topic: string) => void;
 }
 
 export function GenerateTab({ 
@@ -23,7 +25,9 @@ export function GenerateTab({
   selectedChunkIds = [],
   onDraftGenerated, 
   onOpenGetResponseModal,
-  onDraftsChange 
+  onDraftsChange,
+  focusTopic = '',
+  onFocusTopicChange
 }: GenerateTabProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedDraft, setGeneratedDraft] = useState<GeneratedDraft | null>(null)
@@ -57,6 +61,7 @@ export function GenerateTab({
           tone: selectedTone,
           style: selectedStyle,
           selectedChunkIds: selectedChunkIds.length > 0 ? selectedChunkIds : undefined,
+          query: focusTopic.trim() || undefined, // Use focus topic as search query
         }),
       })
 
@@ -119,7 +124,22 @@ export function GenerateTab({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Existing chunk selection UI */}
+        {/* Focus Topic Input */}
+        <div className="space-y-2">
+          <label className="block text-sm font-body font-medium text-charcoal">
+            Focus Topic (Optional)
+          </label>
+          <input
+            type="text"
+            value={focusTopic}
+            onChange={(e) => onFocusTopicChange?.(e.target.value)}
+            placeholder="e.g., 'AI writing tools', 'productivity tips', 'email marketing'"
+            className="tactile-input w-full"
+          />
+          <p className="text-xs text-charcoal/60 font-body">
+            Specify a topic to prioritize chunks with matching titles or tags. Leave empty to use all content.
+          </p>
+        </div>
         
         {/* New Tone and Style Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

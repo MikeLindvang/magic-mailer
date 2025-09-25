@@ -20,6 +20,10 @@ export const zChunk = z.object({
   }).optional(),
   vector: z.boolean().optional(),
   embedding: z.array(z.number()).optional(),
+  // AI-generated title and tags
+  title: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  confidence: z.number().min(0).max(1).optional(),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().optional(),
 });

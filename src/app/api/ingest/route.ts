@@ -10,6 +10,8 @@ import { chunkMarkdown } from '@/lib/chunking/byHeadings';
 import { type Asset } from '@/lib/schemas/asset';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { embedMany } from '@/lib/vector/embeddings';
+import { titleAndTagChunk } from '@/services/chunkLabeler';
+import { callOpenAIJSON } from '@/services/providers/openaiCaller';
 import { ObjectId } from 'mongodb';
 import crypto from 'crypto';
 
@@ -316,21 +318,58 @@ export async function POST(request: Request): Promise<Response> {
       // Continue without embeddings rather than failing the entire ingestion
     }
     
-    // Convert to database chunk format with embeddings
-    const chunks: Chunk[] = markdownChunks.map((chunk, index) => ({
-      _id: new ObjectId().toString(),
-      projectId,
-      assetId,
-      chunkId: chunk.chunkId,
-      userId, // Add userId to chunk for proper access control
-      md_text: chunk.md_text,
-      tokens: chunk.tokens,
-      section: chunk.section,
-      meta: chunk.meta,
-      vector: embeddings.length > 0, // Set to true if we have embeddings
-      embedding: embeddings[index] || undefined, // Store the embedding vector
-      createdAt: new Date(),
-    }));
+    // Get existing chunk titles for uniqueness enforcement
+    const chunksColl = await getColl<Chunk>('chunks');
+    const existingChunks = await chunksColl.find({ projectId }).toArray();
+    const existingTitles = new Set(existingChunks.map(c => c.title).filter(Boolean));
+
+    // Convert to database chunk format with embeddings and AI-generated titles/tags
+    const chunks: Chunk[] = await Promise.all(
+      markdownChunks.map(async (chunk, index) => {
+        // Generate title and tags using AI
+        let title: string | undefined;
+        let tags: string[] | undefined;
+        let confidence: number | undefined;
+
+        try {
+          const labelResult = await titleAndTagChunk(chunk.md_text, {
+            callModel: callOpenAIJSON,
+            existingTitles: Array.from(existingTitles),
+            contextHint: asset.title, // Use asset title as context
+            maxChars: 2000,
+          });
+
+          title = labelResult.title;
+          tags = labelResult.tags;
+          confidence = labelResult.confidence;
+
+          // Add the new title to the set for subsequent chunks
+          existingTitles.add(title);
+        } catch (error) {
+          console.warn(`Failed to generate title/tags for chunk ${chunk.chunkId}:`, error);
+          // Fallback to using the first heading or section
+          title = chunk.meta?.hpath?.[0] || chunk.section || 'Untitled Chunk';
+        }
+
+        return {
+          _id: new ObjectId().toString(),
+          projectId,
+          assetId,
+          chunkId: chunk.chunkId,
+          userId, // Add userId to chunk for proper access control
+          md_text: chunk.md_text,
+          tokens: chunk.tokens,
+          section: chunk.section,
+          meta: chunk.meta,
+          vector: embeddings.length > 0, // Set to true if we have embeddings
+          embedding: embeddings[index] || undefined, // Store the embedding vector
+          title,
+          tags,
+          confidence,
+          createdAt: new Date(),
+        };
+      })
+    );
 
     // Insert asset and chunks in a transaction-like manner
     // Note: MongoDB transactions require replica sets, so we'll do sequential inserts
@@ -339,7 +378,6 @@ export async function POST(request: Request): Promise<Response> {
     await assetsColl.insertOne(asset);
     
     if (chunks.length > 0) {
-      const chunksColl = await getColl<Chunk>('chunks');
       await chunksColl.insertMany(chunks);
     }
 

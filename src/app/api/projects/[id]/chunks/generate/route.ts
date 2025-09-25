@@ -3,6 +3,8 @@ import { successResponse, errorResponse } from '@/lib/api/response';
 import { getColl } from '@/lib/db/mongo';
 import { type Chunk } from '@/lib/schemas/chunk';
 import { hybridRetrieve } from '@/lib/retrieval/hybrid';
+import { titleAndTagChunk } from '@/services/chunkLabeler';
+import { callOpenAIJSON } from '@/services/providers/openaiCaller';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
@@ -196,11 +198,40 @@ export async function POST(
       contextPack
     );
 
-    // Create chunk records in database
+    // Get existing chunk titles for uniqueness enforcement
     const chunksColl = await getColl<Chunk>('chunks');
+    const existingChunks = await chunksColl.find({ projectId }).toArray();
+    const existingTitles = new Set(existingChunks.map(c => c.title).filter(Boolean));
+
+    // Create chunk records in database
     const createdChunks: Chunk[] = [];
 
     for (const generatedChunk of generatedChunks) {
+      // Generate title and tags using AI
+      let title: string | undefined;
+      let tags: string[] | undefined;
+      let confidence: number | undefined;
+
+      try {
+        const labelResult = await titleAndTagChunk(generatedChunk.content, {
+          callModel: callOpenAIJSON,
+          existingTitles: Array.from(existingTitles),
+          contextHint: project.title, // Use project title as context
+          maxChars: 2000,
+        });
+
+        title = labelResult.title;
+        tags = labelResult.tags;
+        confidence = labelResult.confidence;
+
+        // Add the new title to the set for subsequent chunks
+        existingTitles.add(title);
+      } catch (error) {
+        console.warn(`Failed to generate title/tags for AI chunk:`, error);
+        // Fallback to using the generated title
+        title = generatedChunk.title;
+      }
+
       const chunkId = `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const chunk: Chunk = {
         _id: new ObjectId().toString(),
@@ -215,6 +246,9 @@ export async function POST(
           hpath: [generatedChunk.title],
         },
         vector: false, // AI-generated chunks don't have embeddings by default
+        title,
+        tags,
+        confidence,
         createdAt: new Date(),
       };
 

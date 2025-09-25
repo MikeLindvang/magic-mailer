@@ -11,6 +11,8 @@ export interface HybridSearchResult {
   md_text: string;
   hpath: string[];
   source: 'vector' | 'lexical' | 'both';
+  title?: string;
+  tags?: string[];
 }
 
 /**
@@ -73,7 +75,9 @@ function mergeResults(
       score: result.score * 0.6, // Weight vector search at 60%
       md_text: result.md_text,
       hpath: result.hpath,
-      source: 'vector'
+      source: 'vector',
+      title: result.title,
+      tags: result.tags
     });
   });
   
@@ -95,7 +99,9 @@ function mergeResults(
         score: result.score * 0.4, // Weight lexical at 40%
         md_text: result.md_text,
         hpath: result.hpath,
-        source: 'lexical'
+        source: 'lexical',
+        title: result.title,
+        tags: result.tags
       });
     }
   });
@@ -119,12 +125,20 @@ function buildContextPack(chunks: HybridSearchResult[]): string {
   
   return chunks
     .map(chunk => {
+      // Use title if available, otherwise fall back to chunkId
+      const title = chunk.title || `Chunk ${chunk.chunkId}`;
+      
       // Create hierarchical path display if hpath exists
       const pathDisplay = chunk.hpath.length > 0 
         ? ` (${chunk.hpath.join(' > ')})` 
         : '';
       
-      return `## [${chunk.chunkId}]${pathDisplay}\n\n${chunk.md_text.trim()}\n`;
+      // Add tags if available
+      const tagDisplay = chunk.tags && chunk.tags.length > 0 
+        ? `\n**Tags:** ${chunk.tags.join(', ')}` 
+        : '';
+      
+      return `## ${title}${pathDisplay}${tagDisplay}\n\n${chunk.md_text.trim()}\n`;
     })
     .join('\n');
 }

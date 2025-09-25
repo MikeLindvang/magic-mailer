@@ -9,6 +9,8 @@ export interface LexicalSearchResult {
   score: number;
   md_text: string;
   hpath: string[];
+  title?: string;
+  tags?: string[];
 }
 
 /**
@@ -172,6 +174,8 @@ export async function lexicalSearch(
         score: heuristicScore,
         md_text: chunk.md_text,
         hpath: chunk.meta?.hpath || [],
+        title: chunk.title,
+        tags: chunk.tags,
       };
     });
 

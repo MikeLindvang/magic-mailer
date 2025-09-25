@@ -69,6 +69,74 @@ function addUtmParams(url: string, projectId: string): string {
 }
 
 /**
+ * Prioritize chunks based on title and tag matching with the focus topic
+ */
+function prioritizeChunksByTopic(
+  chunks: Array<{ chunkId: string; score: number; md_text: string; hpath: string[]; source: string; title?: string; tags?: string[] }>,
+  focusTopic: string
+): Array<{ chunkId: string; score: number; md_text: string; hpath: string[]; source: string; title?: string; tags?: string[] }> {
+  // Score chunks based on title and tag matching
+  const topicLower = focusTopic.toLowerCase();
+  const scoredChunks = chunks.map(chunk => {
+    let priorityScore = chunk.score; // Start with original score
+
+    // Boost score for title matches
+    if (chunk.title?.toLowerCase().includes(topicLower)) {
+      priorityScore += 0.5; // Strong boost for title matches
+    }
+
+    // Boost score for tag matches
+    if (chunk.tags && chunk.tags.length > 0) {
+      const matchingTags = chunk.tags.filter(tag => 
+        tag.toLowerCase().includes(topicLower)
+      );
+      priorityScore += matchingTags.length * 0.3; // Moderate boost per matching tag
+    }
+
+    // Boost score for content matches (already handled by hybrid search, but reinforce)
+    if (chunk.md_text.toLowerCase().includes(topicLower)) {
+      priorityScore += 0.2; // Small boost for content matches
+    }
+
+    return {
+      ...chunk,
+      score: priorityScore
+    };
+  });
+
+  // Sort by priority score (highest first)
+  return scoredChunks.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Build context pack string with chunk headers (reused from hybrid.ts)
+ */
+function buildContextPack(chunks: Array<{ chunkId: string; md_text: string; hpath: string[]; title?: string; tags?: string[] }>): string {
+  if (chunks.length === 0) {
+    return '';
+  }
+  
+  return chunks
+    .map(chunk => {
+      // Use title if available, otherwise fall back to chunkId
+      const title = chunk.title || `Chunk ${chunk.chunkId}`;
+      
+      // Create hierarchical path display if hpath exists
+      const pathDisplay = chunk.hpath.length > 0 
+        ? ` (${chunk.hpath.join(' > ')})` 
+        : '';
+      
+      // Add tags if available
+      const tagDisplay = chunk.tags && chunk.tags.length > 0 
+        ? `\n**Tags:** ${chunk.tags.join(', ')}` 
+        : '';
+      
+      return `## ${title}${pathDisplay}${tagDisplay}\n\n${chunk.md_text.trim()}\n`;
+    })
+    .join('\n');
+}
+
+/**
  * Call OpenAI API to generate email content
  */
 async function generateEmailContent(prompt: string, config = getEmailConfig()): Promise<GeneratedEmail> {
@@ -246,13 +314,20 @@ export async function POST(request: NextRequest): Promise<Response> {
         source: 'selected' as const
       }));
 
-      // Build context pack from selected chunks
+      // Build context pack from selected chunks with titles and tags
       const contextPack = formattedChunks
         .map(chunk => {
+          const fullChunk = selectedChunks.find(c => c.chunkId === chunk.chunkId || c._id === chunk.chunkId);
+          const title = fullChunk?.title || chunk.hpath[0] || 'Selected Content';
+          const tags = fullChunk?.tags || [];
           const pathDisplay = chunk.hpath.length > 0 
             ? ` (${chunk.hpath.join(' > ')})` 
             : '';
-          return `## [${chunk.chunkId}]${pathDisplay}\n\n${chunk.md_text.trim()}\n`;
+          const tagDisplay = tags.length > 0 
+            ? `\n**Tags:** ${tags.join(', ')}` 
+            : '';
+          
+          return `## ${title}${pathDisplay}${tagDisplay}\n\n${chunk.md_text.trim()}\n`;
         })
         .join('\n');
 
@@ -261,16 +336,25 @@ export async function POST(request: NextRequest): Promise<Response> {
         contextPack
       };
     } else {
-      // Use hybrid search as before
+      // Use hybrid search with title/tag prioritization
       retrievalResult = await hybridRetrieve({
         projectId,
         query: searchQuery,
-        k: 8, // Get top 8 most relevant chunks
+        k: 12, // Get more chunks to allow for prioritization
         userId // Pass userId for additional security
       });
 
       if (!retrievalResult.contextPack || retrievalResult.chunks.length === 0) {
         return errorResponse('No relevant content found for email generation', 400);
+      }
+
+      // Prioritize chunks with matching titles or tags
+      if (searchQuery && searchQuery !== project.name) {
+        const prioritizedChunks = prioritizeChunksByTopic(retrievalResult.chunks, searchQuery);
+        retrievalResult = {
+          chunks: prioritizedChunks.slice(0, 8), // Take top 8 after prioritization
+          contextPack: buildContextPack(prioritizedChunks.slice(0, 8))
+        };
       }
     }
 

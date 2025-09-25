@@ -9,6 +9,8 @@ export interface VectorSearchResult {
   score: number;
   md_text: string;
   hpath: string[];
+  title?: string;
+  tags?: string[];
 }
 
 /**
@@ -122,6 +124,8 @@ export async function vectorSearch(
             score,
             md_text: chunk.md_text,
             hpath: chunk.meta?.hpath || [],
+            title: chunk.title,
+            tags: chunk.tags,
           };
         } catch (error) {
           // Skip chunks with invalid embeddings

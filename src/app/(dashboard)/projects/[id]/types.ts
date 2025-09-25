@@ -45,6 +45,10 @@ export interface ChunkWithAsset {
   embedding?: number[];
   createdAt: string | Date;
   updatedAt?: string | Date;
+  // AI-generated fields
+  title?: string;
+  tags?: string[];
+  confidence?: number;
   // Additional fields for display
   assetTitle?: string;
   assetType?: Asset['type'];

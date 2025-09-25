@@ -31,7 +31,7 @@ export default function SignInPage() {
           }}
           routing="hash" // ✅ REQUIRED: Use hash routing for modal behavior
           signUpUrl="/sign-up"
-          redirectUrl="/projects"
+          fallbackRedirectUrl="/projects"
           afterSignInUrl="/projects"
         />
       </div>
