@@ -321,7 +321,7 @@ export async function POST(request: Request): Promise<Response> {
     // Get existing chunk titles for uniqueness enforcement
     const chunksColl = await getColl<Chunk>('chunks');
     const existingChunks = await chunksColl.find({ projectId }).toArray();
-    const existingTitles = new Set(existingChunks.map(c => c.title).filter(Boolean));
+    const existingTitles = new Set(existingChunks.map(c => c.title).filter((title): title is string => Boolean(title)));
 
     // Convert to database chunk format with embeddings and AI-generated titles/tags
     const chunks: Chunk[] = await Promise.all(
