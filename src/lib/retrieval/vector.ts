@@ -133,7 +133,7 @@ export async function vectorSearch(
           return null;
         }
       })
-      .filter((result): result is VectorSearchResult => result !== null);
+      .filter((result): result is NonNullable<typeof result> => result !== null);
 
     // Sort by similarity score (highest first) and return top-k
     const topResults = scoredChunks
